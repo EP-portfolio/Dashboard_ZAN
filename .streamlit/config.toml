@@ -1,0 +1,24 @@
+# Configuration Streamlit pour accès réseau
+# =========================================
+
+[server]
+# Permettre l'accès depuis n'importe quelle adresse IP
+address = "0.0.0.0"
+# Port par défaut
+port = 8501
+# Activer CORS pour l'accès depuis d'autres domaines
+enableCORS = true
+# Activer XSRF pour la sécurité
+enableXsrfProtection = true
+
+[browser]
+# Ne pas ouvrir automatiquement le navigateur
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#2E86AB"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F7FAFC"
+textColor = "#1A202C"
+font = "sans serif"
+
