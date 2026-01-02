@@ -80,13 +80,13 @@ def _render_kpi_card(icon: str, label: str, value: str, sublabel: str, color: st
     """Affiche une carte KPI"""
     
     html = f'''
-<div style="background: linear-gradient(135deg, #FFFFFF 0%, #F7FAFC 100%); border: 1px solid #E2E8F0; border-left: 4px solid {color}; border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 6px rgba(0,0,0,0.07); min-height: 120px;">
+<div style="background: linear-gradient(135deg, #1E2229 0%, #262730 100%); border: 1px solid #2D3748; border-left: 4px solid {color}; border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 6px rgba(0,0,0,0.4); min-height: 120px;">
 <div style="margin-bottom: 0.5rem;">
 <span style="font-size: 1.5rem; margin-right: 0.5rem;">{icon}</span>
-<span style="color: #4A5568; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px;">{label}</span>
+<span style="color: #CBD5E0; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px;">{label}</span>
 </div>
-<div style="color: #1A202C; font-size: 1.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.35rem;">{value}</div>
-<div style="color: #718096; font-size: 0.8rem; font-weight: 500;">{sublabel}</div>
+<div style="color: #FAFAFA; font-size: 1.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.35rem;">{value}</div>
+<div style="color: #A0AEC0; font-size: 0.8rem; font-weight: 500;">{sublabel}</div>
 </div>
 '''
     
@@ -97,23 +97,23 @@ def render_summary_capsule(metrics: dict, perimetre: str):
     """Affiche une capsule de résumé"""
     
     html = f'''
-<div style="background: linear-gradient(135deg, #EBF4FF 0%, #E6FFFA 100%); border: 1px solid #90CDF4; border-radius: 12px; padding: 1.5rem; margin: 1rem 0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-<div style="color: #1E3A5F; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 700;">📊 Synthese - {perimetre}</div>
+<div style="background: linear-gradient(135deg, rgba(46, 134, 171, 0.15) 0%, rgba(72, 187, 120, 0.15) 100%); border: 1px solid #2D3748; border-radius: 12px; padding: 1.5rem; margin: 1rem 0; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+<div style="color: #FAFAFA; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 700;">📊 Synthese - {perimetre}</div>
 <table style="width: 100%; border-collapse: collapse;">
 <tr>
-<td style="background: white; border-radius: 8px; padding: 0.75rem 1rem; border-left: 3px solid #2E86AB; width: 33%;">
-<div style="color: #718096; font-size: 0.75rem; text-transform: uppercase;">Communes</div>
-<div style="color: #1A202C; font-size: 1.25rem; font-weight: 700;">{metrics['nb_communes']}</div>
+<td style="background: #1E2229; border-radius: 8px; padding: 0.75rem 1rem; border-left: 3px solid #2E86AB; width: 33%;">
+<div style="color: #A0AEC0; font-size: 0.75rem; text-transform: uppercase;">Communes</div>
+<div style="color: #FAFAFA; font-size: 1.25rem; font-weight: 700;">{metrics['nb_communes']}</div>
 </td>
 <td style="width: 1rem;"></td>
-<td style="background: white; border-radius: 8px; padding: 0.75rem 1rem; border-left: 3px solid #1D7A4B; width: 33%;">
-<div style="color: #718096; font-size: 0.75rem; text-transform: uppercase;">Surface Totale</div>
-<div style="color: #1A202C; font-size: 1.25rem; font-weight: 700;">{metrics['surface_totale_ha']:,.0f} ha</div>
+<td style="background: #1E2229; border-radius: 8px; padding: 0.75rem 1rem; border-left: 3px solid #48BB78; width: 33%;">
+<div style="color: #A0AEC0; font-size: 0.75rem; text-transform: uppercase;">Surface Totale</div>
+<div style="color: #FAFAFA; font-size: 1.25rem; font-weight: 700;">{metrics['surface_totale_ha']:,.0f} ha</div>
 </td>
 <td style="width: 1rem;"></td>
-<td style="background: white; border-radius: 8px; padding: 0.75rem 1rem; border-left: 3px solid #A23B72; width: 33%;">
-<div style="color: #718096; font-size: 0.75rem; text-transform: uppercase;">Taux Artif.</div>
-<div style="color: #1A202C; font-size: 1.25rem; font-weight: 700;">{metrics['taux_artif_global']:.2f}%</div>
+<td style="background: #1E2229; border-radius: 8px; padding: 0.75rem 1rem; border-left: 3px solid #A23B72; width: 33%;">
+<div style="color: #A0AEC0; font-size: 0.75rem; text-transform: uppercase;">Taux Artif.</div>
+<div style="color: #FAFAFA; font-size: 1.25rem; font-weight: 700;">{metrics['taux_artif_global']:.2f}%</div>
 </td>
 </tr>
 </table>

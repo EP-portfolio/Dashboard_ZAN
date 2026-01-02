@@ -101,14 +101,14 @@ if data_loaded:
     with col2:
         # Objectif
         html_obj = f'''
-<div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3E2 100%); border: 1px solid #F6AD55; border-left: 4px solid #D4820A; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;">
-<div style="color: #744210; margin-bottom: 1rem; font-size: 1rem; font-weight: 700;">🎯 Objectif -50% (Loi Climat)</div>
+<div style="background: linear-gradient(135deg, rgba(237, 137, 54, 0.15) 0%, rgba(245, 101, 101, 0.15) 100%); border: 1px solid #2D3748; border-left: 4px solid #ED8936; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;">
+<div style="color: #FAFAFA; margin-bottom: 1rem; font-size: 1rem; font-weight: 700;">🎯 Objectif -50% (Loi Climat)</div>
 <table style="width: 100%; border-collapse: collapse;">
-<tr><td style="color: #744210; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #ECC94B;">Periode reference</td><td style="color: #744210; font-weight: 700; text-align: right; padding: 0.4rem 0; border-bottom: 1px solid #ECC94B;">2011-2021</td></tr>
-<tr><td style="color: #744210; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #ECC94B;">Conso. reference</td><td style="color: #744210; font-weight: 700; text-align: right; padding: 0.4rem 0; border-bottom: 1px solid #ECC94B;">{metrics['conso_reference']:.1f} ha</td></tr>
-<tr><td style="color: #744210; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #ECC94B;">Enveloppe 2021-2031</td><td style="color: #744210; font-weight: 700; text-align: right; padding: 0.4rem 0; border-bottom: 1px solid #ECC94B;">{metrics['enveloppe_zan']:.1f} ha</td></tr>
-<tr><td style="color: #744210; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #ECC94B;">Deja consomme (21-24)</td><td style="color: #744210; font-weight: 700; text-align: right; padding: 0.4rem 0; border-bottom: 1px solid #ECC94B;">{metrics['conso_2021_2024']:.1f} ha</td></tr>
-<tr><td style="color: #744210; font-size: 0.85rem; font-weight: 600; padding: 0.4rem 0;">Reste disponible</td><td style="color: #1D7A4B; font-weight: 800; font-size: 1.1rem; text-align: right; padding: 0.4rem 0;">{metrics['reste_disponible']:.1f} ha</td></tr>
+<tr><td style="color: #CBD5E0; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #2D3748;">Periode reference</td><td style="color: #FAFAFA; font-weight: 700; text-align: right; padding: 0.4rem 0; border-bottom: 1px solid #2D3748;">2011-2021</td></tr>
+<tr><td style="color: #CBD5E0; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #2D3748;">Conso. reference</td><td style="color: #FAFAFA; font-weight: 700; text-align: right; padding: 0.4rem 0; border-bottom: 1px solid #2D3748;">{metrics['conso_reference']:.1f} ha</td></tr>
+<tr><td style="color: #CBD5E0; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #2D3748;">Enveloppe 2021-2031</td><td style="color: #FAFAFA; font-weight: 700; text-align: right; padding: 0.4rem 0; border-bottom: 1px solid #2D3748;">{metrics['enveloppe_zan']:.1f} ha</td></tr>
+<tr><td style="color: #CBD5E0; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #2D3748;">Deja consomme (21-24)</td><td style="color: #FAFAFA; font-weight: 700; text-align: right; padding: 0.4rem 0; border-bottom: 1px solid #2D3748;">{metrics['conso_2021_2024']:.1f} ha</td></tr>
+<tr><td style="color: #CBD5E0; font-size: 0.85rem; font-weight: 600; padding: 0.4rem 0;">Reste disponible</td><td style="color: #48BB78; font-weight: 800; font-size: 1.1rem; text-align: right; padding: 0.4rem 0;">{metrics['reste_disponible']:.1f} ha</td></tr>
 </table>
 </div>
 '''
@@ -128,15 +128,15 @@ if data_loaded:
             status_text = "Attention: risque de depassement"
         
         html_gauge = f'''
-<div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 1rem;">
+<div style="background: #1E2229; border: 1px solid #2D3748; border-radius: 10px; padding: 1rem;">
 <table style="width: 100%; margin-bottom: 0.5rem;"><tr>
-<td style="color: #4A5568; font-size: 0.85rem; font-weight: 600;">Progression</td>
+<td style="color: #CBD5E0; font-size: 0.85rem; font-weight: 600;">Progression</td>
 <td style="color: {progress_color}; font-weight: 700; text-align: right;">{progress:.1f}%</td>
 </tr></table>
-<div style="background: #E2E8F0; border-radius: 10px; height: 12px; overflow: hidden;">
+<div style="background: #2D3748; border-radius: 10px; height: 12px; overflow: hidden;">
 <div style="background: {progress_color}; height: 100%; width: {progress}%; border-radius: 10px;"></div>
 </div>
-<div style="color: #718096; font-size: 0.75rem; margin-top: 0.5rem; text-align: center;">{status_text}</div>
+<div style="color: #A0AEC0; font-size: 0.75rem; margin-top: 0.5rem; text-align: center;">{status_text}</div>
 </div>
 '''
         st.markdown(html_gauge, unsafe_allow_html=True)
@@ -162,9 +162,9 @@ if data_loaded:
     # Footer avec métadonnées
     footer_text = get_footer_text()
     st.markdown(f'''
-<div style="background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%); border-radius: 10px; padding: 1rem 1.5rem; margin-top: 2rem; text-align: center; border: 1px solid #E2E8F0;">
-<div style="color: #718096; font-size: 0.85rem; margin-bottom: 0.5rem;"><strong>Dashboard ZAN</strong> - Suivi de l'artificialisation des sols</div>
-<div style="color: #718096; font-size: 0.75rem; font-style: italic;">{footer_text}</div>
+<div style="background: linear-gradient(135deg, #1E2229 0%, #262730 100%); border-radius: 10px; padding: 1rem 1.5rem; margin-top: 2rem; text-align: center; border: 1px solid #2D3748;">
+<div style="color: #CBD5E0; font-size: 0.85rem; margin-bottom: 0.5rem;"><strong>Dashboard ZAN</strong> - Suivi de l'artificialisation des sols</div>
+<div style="color: #A0AEC0; font-size: 0.75rem; font-style: italic;">{footer_text}</div>
 </div>
 ''', unsafe_allow_html=True)
 

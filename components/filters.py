@@ -35,8 +35,8 @@ def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
     
     # Département
     st.markdown('''
-<div style="background: #F7FAFC; border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; border-left: 3px solid #2E86AB;">
-<span style="color: #1E3A5F; font-weight: 600; font-size: 0.85rem;">🏛️ Departement</span>
+<div style="background: #1E2229; border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; border-left: 3px solid #2E86AB;">
+<span style="color: #FAFAFA; font-weight: 600; font-size: 0.85rem;">🏛️ Departement</span>
 </div>
 ''', unsafe_allow_html=True)
     
@@ -53,8 +53,8 @@ def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
     
     # Communes
     st.markdown('''
-<div style="background: #F7FAFC; border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; border-left: 3px solid #A23B72;">
-<span style="color: #1E3A5F; font-weight: 600; font-size: 0.85rem;">🏘️ Communes</span>
+<div style="background: #1E2229; border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; border-left: 3px solid #A23B72;">
+<span style="color: #FAFAFA; font-weight: 600; font-size: 0.85rem;">🏘️ Communes</span>
 </div>
 ''', unsafe_allow_html=True)
     
@@ -77,8 +77,8 @@ def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
     
     # Typologie AAV
     st.markdown('''
-<div style="background: #F7FAFC; border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; border-left: 3px solid #1D7A4B;">
-<span style="color: #1E3A5F; font-weight: 600; font-size: 0.85rem;">🌆 Typologie Urbaine</span>
+<div style="background: #1E2229; border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; border-left: 3px solid #48BB78;">
+<span style="color: #FAFAFA; font-weight: 600; font-size: 0.85rem;">🌆 Typologie Urbaine</span>
 </div>
 ''', unsafe_allow_html=True)
     
@@ -121,7 +121,7 @@ def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
 <td style="background: white; border-radius: 6px; padding: 0.5rem 0.75rem;">
 <table style="width: 100%;"><tr>
 <td style="color: #718096; font-size: 0.8rem;">Communes</td>
-<td style="color: #1A202C; font-weight: 700; font-size: 1rem; text-align: right;">{nb_communes}</td>
+<td style="color: #FAFAFA; font-weight: 700; font-size: 1rem; text-align: right;">{nb_communes}</td>
 </tr></table>
 </td>
 </tr>

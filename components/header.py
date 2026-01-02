@@ -53,14 +53,14 @@ def render_section_header(title: str, icon: str = "📊", description: str = Non
     
     desc_html = ""
     if description:
-        desc_html = f'<div style="color: #718096; font-size: 0.9rem; margin-top: 0.5rem;">{description}</div>'
+        desc_html = f'<div style="color: #CBD5E0; font-size: 0.9rem; margin-top: 0.5rem;">{description}</div>'
     
     html = f'''
-<div style="background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%); border-radius: 10px; padding: 1rem 1.25rem; margin: 1.5rem 0 1rem 0; border-left: 4px solid #2E86AB;">
+<div style="background: linear-gradient(135deg, #1E2229 0%, #262730 100%); border-radius: 10px; padding: 1rem 1.25rem; margin: 1.5rem 0 1rem 0; border-left: 4px solid #2E86AB;">
 <table style="border-collapse: collapse;">
 <tr>
 <td style="vertical-align: middle; padding-right: 0.75rem;"><span style="font-size: 1.5rem;">{icon}</span></td>
-<td style="vertical-align: middle;"><span style="color: #1E3A5F; font-size: 1.15rem; font-weight: 700;">{title}</span></td>
+<td style="vertical-align: middle;"><span style="color: #FAFAFA; font-size: 1.15rem; font-weight: 700;">{title}</span></td>
 </tr>
 </table>
 {desc_html}

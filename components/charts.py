@@ -75,7 +75,7 @@ def render_evolution_chart(df: pd.DataFrame):
             marker=dict(color=colors_list),
             text=df_evolution["Consommation"].apply(lambda x: f"{x:.1f}"),
             textposition="outside",
-            textfont=dict(size=11, color="#1A202C", family="Arial"),
+            textfont=dict(size=11, color="#FAFAFA", family="Arial"),
             hovertemplate="<b>Annee %{x}</b><br>Consommation: %{y:.2f} ha<extra></extra>",
             name="Consommation annuelle",
         )
@@ -101,13 +101,13 @@ def render_evolution_chart(df: pd.DataFrame):
         ),
         xaxis=dict(
             title="Annee",
-            tickfont=dict(size=12, color="#1A202C"),
+            tickfont=dict(size=12, color="#FAFAFA"),
             tickangle=0,
             showgrid=False,
         ),
         yaxis=dict(
             title="Hectares",
-            tickfont=dict(size=12, color="#1A202C"),
+            tickfont=dict(size=12, color="#FAFAFA"),
             gridcolor="#E2E8F0",
             gridwidth=1,
             range=[0, max(df_evolution["Consommation"].max() * 1.3, moyenne * 1.1)],
@@ -247,8 +247,8 @@ def render_repartition_chart(metrics: dict):
     
     with col2:
         st.markdown("""
-<div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 1rem; margin-top: 2rem;">
-<div style="color: #1E3A5F; font-weight: 700; font-size: 0.95rem; margin-bottom: 1rem;">Detail par destination</div>
+<div style="background: #1E2229; border: 1px solid #2D3748; border-radius: 10px; padding: 1rem; margin-top: 2rem;">
+<div style="color: #FAFAFA; font-weight: 700; font-size: 0.95rem; margin-bottom: 1rem;">Detail par destination</div>
 """, unsafe_allow_html=True)
         
         for cat, val, col in data_rep:
@@ -257,16 +257,16 @@ def render_repartition_chart(metrics: dict):
                 st.markdown(f"""
 <div style="display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #E2E8F0;">
 <div style="width: 12px; height: 12px; background: {col}; border-radius: 3px; margin-right: 0.75rem;"></div>
-<div style="flex: 1; color: #4A5568; font-size: 0.9rem;">{cat}</div>
-<div style="color: #1A202C; font-weight: 600; font-size: 0.9rem;">{val:.1f} ha</div>
-<div style="color: #718096; font-size: 0.85rem; margin-left: 0.5rem; width: 50px; text-align: right;">({pct:.1f}%)</div>
+<div style="flex: 1; color: #CBD5E0; font-size: 0.9rem;">{cat}</div>
+<div style="color: #FAFAFA; font-weight: 600; font-size: 0.9rem;">{val:.1f} ha</div>
+<div style="color: #A0AEC0; font-size: 0.85rem; margin-left: 0.5rem; width: 50px; text-align: right;">({pct:.1f}%)</div>
 </div>
 """, unsafe_allow_html=True)
         
         st.markdown(f"""
-<div style="display: flex; align-items: center; padding: 0.75rem 0; margin-top: 0.5rem; background: #F7FAFC; border-radius: 6px; padding-left: 0.75rem;">
-<div style="flex: 1; color: #1E3A5F; font-weight: 700; font-size: 0.95rem;">TOTAL</div>
-<div style="color: #1E3A5F; font-weight: 800; font-size: 1.1rem;">{total:.1f} ha</div>
+<div style="display: flex; align-items: center; padding: 0.75rem 0; margin-top: 0.5rem; background: #262730; border-radius: 6px; padding-left: 0.75rem;">
+<div style="flex: 1; color: #FAFAFA; font-weight: 700; font-size: 0.95rem;">TOTAL</div>
+<div style="color: #FAFAFA; font-weight: 800; font-size: 1.1rem;">{total:.1f} ha</div>
 <div style="width: 60px;"></div>
 </div>
 </div>
@@ -323,14 +323,14 @@ def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
             ),
             xaxis=dict(
                 title="Hectares artificialises (2009-2024)",
-                tickfont=dict(size=12, color="#1A202C"),
+                tickfont=dict(size=12, color="#FAFAFA"),
                 gridcolor="#E2E8F0",
                 gridwidth=1,
                 showgrid=True,
             ),
             yaxis=dict(
                 title="",
-                tickfont=dict(size=12, color="#1A202C"),
+                tickfont=dict(size=12, color="#FAFAFA"),
                 showgrid=False,
             ),
             template="plotly_white",
@@ -381,11 +381,11 @@ Carte non disponible ({str(e)[:50]}) - Affichage en tableau
                 rang = i + 1
                 pop_str = f"{int(row['pop21']):,}".replace(",", " ")
                 st.markdown(f"""
-<div style="display: flex; align-items: center; padding: 0.6rem; background: {'#F7FAFC' if rang % 2 == 0 else 'white'}; border-radius: 6px; margin-bottom: 0.25rem;">
+<div style="display: flex; align-items: center; padding: 0.6rem; background: {'#262730' if rang % 2 == 0 else '#1E2229'}; border-radius: 6px; margin-bottom: 0.25rem;">
 <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #2E86AB 0%, #1E3A5F 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; margin-right: 0.75rem;">{rang}</div>
 <div style="flex: 1;">
-<div style="color: #1A202C; font-weight: 600; font-size: 0.95rem;">{row['idcomtxt']}</div>
-<div style="color: #718096; font-size: 0.8rem;">{row['iddeptxt']} - Pop: {pop_str}</div>
+<div style="color: #FAFAFA; font-weight: 600; font-size: 0.95rem;">{row['idcomtxt']}</div>
+<div style="color: #A0AEC0; font-size: 0.8rem;">{row['iddeptxt']} - Pop: {pop_str}</div>
 </div>
 <div style="color: #2E86AB; font-weight: 700; font-size: 1rem;">{row['artif_total_ha']:.1f} ha</div>
 </div>
@@ -548,12 +548,12 @@ def render_trajectory_chart(df: pd.DataFrame, metrics: dict):
             title="",
             tickmode="linear",
             dtick=1,
-            tickfont=dict(size=11, color="#1A202C"),
+            tickfont=dict(size=11, color="#FAFAFA"),
             gridcolor="#E2E8F0",
         ),
         yaxis=dict(
             title="Consommation cumulee (ha)",
-            tickfont=dict(size=11, color="#1A202C"),
+            tickfont=dict(size=11, color="#FAFAFA"),
             gridcolor="#E2E8F0",
         ),
         template="plotly_white",
