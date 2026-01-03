@@ -1136,6 +1136,7 @@ def render_repartition_chart(metrics: dict):
 def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
     """
     Affiche le top communes avec histogramme empilé horizontal par destination + carte
+    VERSION: Pleine largeur pour plus de lisibilité
     """
     
     # Colonnes de destination disponibles
@@ -1157,147 +1158,311 @@ def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
             if df_top[col].max() > 1000:
                 df_top[col] = df_top[col] / 10000
     
-    col1, col2 = st.columns([1, 1])
+    # ===== HISTOGRAMME PLEINE LARGEUR =====
+    df_plot = df_top.sort_values("artif_total_ha", ascending=True)
     
-    with col1:
-        # Trier par total décroissant pour l'affichage
-        df_plot = df_top.sort_values("artif_total_ha", ascending=True)
-        
-        fig = go.Figure()
-        
-        # Vérifier si on a les colonnes de destination
-        has_dest_data = all(col in df_plot.columns for col in dest_cols)
-        
-        if has_dest_data:
-            # Histogramme empilé horizontal par destination
-            for dest_name, dest_col, dest_color in zip(dest_names, dest_cols, dest_colors):
-                fig.add_trace(
-                    go.Bar(
-                        y=df_plot["idcomtxt"],
-                        x=df_plot[dest_col],
-                        name=dest_name,
-                        orientation="h",
-                        marker=dict(
-                            color=dest_color,
-                            line=dict(color="#1E293B", width=1),
-                        ),
-                        hovertemplate=(
-                            "<b>%{y}</b><br>"
-                            f"{dest_name}: " + "%{x:.2f} ha<br>"
-                            "<extra></extra>"
-                        ),
-                    )
-                )
-        else:
-            # Fallback: barre simple si pas de données par destination
+    fig = go.Figure()
+    
+    # Vérifier si on a les colonnes de destination
+    has_dest_data = all(col in df_plot.columns for col in dest_cols)
+    
+    if has_dest_data:
+        # Histogramme empilé horizontal par destination
+        for dest_name, dest_col, dest_color in zip(dest_names, dest_cols, dest_colors):
             fig.add_trace(
                 go.Bar(
                     y=df_plot["idcomtxt"],
-                    x=df_plot["artif_total_ha"],
+                    x=df_plot[dest_col],
+                    name=dest_name,
                     orientation="h",
                     marker=dict(
-                        color="#2E86AB",
+                        color=dest_color,
                         line=dict(color="#1E293B", width=1),
                     ),
-                    text=df_plot["artif_total_ha"].apply(lambda x: f"{x:.1f} ha"),
-                    textposition="outside",
-                    textfont=dict(size=11, color="#FFFFFF"),
                     hovertemplate=(
                         "<b>%{y}</b><br>"
-                        "Total: %{x:.2f} ha<br>"
+                        f"{dest_name}: " + "%{x:.2f} ha<br>"
                         "<extra></extra>"
                     ),
                 )
             )
-        
-        fig.update_layout(
-            title=dict(
-                text=f"TOP {n_top} COMMUNES - ARTIFICIALISATION PAR DESTINATION",
-                font=dict(size=14, color="#FFFFFF", family="Segoe UI"),
-                x=0.5,
-            ),
-            xaxis=dict(
-                title="Hectares artificialisés (2009-2024)",
-                tickfont=dict(size=11, color="#CBD5E0"),
-                gridcolor="#334155",
-                gridwidth=1,
-                showgrid=True,
-            ),
-            yaxis=dict(
-                title="",
-                tickfont=dict(size=11, color="#FFFFFF"),
-                showgrid=False,
-            ),
-            barmode="stack",
-            template="plotly_dark",
-            height=500,
-            legend=dict(
+    else:
+        # Fallback: barre simple si pas de données par destination
+        fig.add_trace(
+            go.Bar(
+                y=df_plot["idcomtxt"],
+                x=df_plot["artif_total_ha"],
                 orientation="h",
-                yanchor="bottom",
-                y=-0.18,
-                xanchor="center",
-                x=0.5,
-                font=dict(size=11, color="#CBD5E0"),
-                bgcolor="rgba(0,0,0,0)",
-            ),
-            margin=dict(t=80, b=80, l=120, r=40),
-            plot_bgcolor="#0F172A",
-            paper_bgcolor="#1E293B",
+                marker=dict(
+                    color="#2E86AB",
+                    line=dict(color="#1E293B", width=1),
+                ),
+                text=df_plot["artif_total_ha"].apply(lambda x: f"{x:.1f} ha"),
+                textposition="outside",
+                textfont=dict(size=11, color="#FFFFFF"),
+                hovertemplate=(
+                    "<b>%{y}</b><br>"
+                    "Total: %{x:.2f} ha<br>"
+                    "<extra></extra>"
+                ),
+            )
         )
-        
-        # Ajout de la mention de source
-        fig.add_annotation(
-            x=0.98, y=0.02,
-            xref="paper", yref="paper",
-            text=get_data_source_text(),
-            showarrow=False,
-            font=dict(size=9, color="#64748B"),
-            align="right",
-            bgcolor="rgba(15, 23, 42, 0.9)",
-            bordercolor="#334155",
-            borderwidth=1,
-            borderpad=4,
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
     
-    with col2:
-        # Carte interactive
-        st.markdown("""
-<div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 1rem;">
-<div style="color: #1E3A5F; font-weight: 700; font-size: 0.95rem; margin-bottom: 1rem;">🗺️ Localisation des communes</div>
+    fig.update_layout(
+        title=dict(
+            text=f"TOP {n_top} COMMUNES - ARTIFICIALISATION PAR DESTINATION",
+            font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
+            x=0.5,
+        ),
+        xaxis=dict(
+            title="Hectares artificialisés (2009-2024)",
+            tickfont=dict(size=12, color="#CBD5E0"),
+            gridcolor="#334155",
+            gridwidth=1,
+            showgrid=True,
+        ),
+        yaxis=dict(
+            title="",
+            tickfont=dict(size=12, color="#FFFFFF"),
+            showgrid=False,
+        ),
+        barmode="stack",
+        template="plotly_dark",
+        height=450,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.12,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=12, color="#CBD5E0"),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        margin=dict(t=60, b=60, l=150, r=40),
+        plot_bgcolor="#0F172A",
+        paper_bgcolor="#1E293B",
+    )
+    
+    # Ajout de la mention de source
+    fig.add_annotation(
+        x=0.98, y=0.02,
+        xref="paper", yref="paper",
+        text=get_data_source_text(),
+        showarrow=False,
+        font=dict(size=9, color="#64748B"),
+        align="right",
+        bgcolor="rgba(15, 23, 42, 0.9)",
+        bordercolor="#334155",
+        borderwidth=1,
+        borderpad=4,
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # ===== CARTE INTERACTIVE - PLEINE LARGEUR EN DESSOUS =====
+    st.markdown("""
+<div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-top: 1.5rem;">
+<div style="color: #FFFFFF; font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; text-transform: uppercase;">Localisation des communes</div>
+<div style="color: #94A3B8; font-size: 0.8rem; margin-bottom: 1rem;">Taille et couleurs proportionnelles aux destinations d'artificialisation</div>
 """, unsafe_allow_html=True)
+    
+    try:
+        render_communes_map_with_destinations(df_top, dest_cols, dest_names, dest_colors)
+    except Exception as e:
+        # Fallback: tableau detaille
+        st.markdown(f'<div style="color: #94A3B8; font-size: 0.85rem; margin-bottom: 1rem; font-style: italic;">Carte non disponible ({str(e)[:50]}) - Affichage en tableau</div>', unsafe_allow_html=True)
         
-        try:
-            render_communes_map(df_top)
-        except Exception as e:
-            # Fallback: tableau detaille
-            st.markdown(f"""
-<div style="color: #718096; font-size: 0.85rem; margin-bottom: 1rem; font-style: italic;">
-Carte non disponible ({str(e)[:50]}) - Affichage en tableau
-</div>
-""", unsafe_allow_html=True)
-            
-            for i, row in df_top.iterrows():
-                rang = i + 1
-                pop_str = f"{int(row['pop21']):,}".replace(",", " ")
-                st.markdown(f"""
-<div style="display: flex; align-items: center; padding: 0.6rem; background: {'#262730' if rang % 2 == 0 else '#1E2229'}; border-radius: 6px; margin-bottom: 0.25rem;">
-<div style="width: 32px; height: 32px; background: linear-gradient(135deg, #2E86AB 0%, #1E3A5F 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; margin-right: 0.75rem;">{rang}</div>
-<div style="flex: 1;">
-<div style="color: #FAFAFA; font-weight: 600; font-size: 0.95rem;">{row['idcomtxt']}</div>
-<div style="color: #A0AEC0; font-size: 0.8rem;">{row['iddeptxt']} - Pop: {pop_str}</div>
-</div>
-<div style="color: #2E86AB; font-weight: 700; font-size: 1rem;">{row['artif_total_ha']:.1f} ha</div>
-</div>
-""", unsafe_allow_html=True)
+        for i, row in df_top.iterrows():
+            rang = i + 1
+            pop_str = f"{int(row['pop21']):,}".replace(",", " ") if pd.notna(row.get('pop21')) else "N/A"
+            dept = row.get('iddeptxt', '')
+            st.markdown(f'<div style="display: flex; align-items: center; padding: 0.6rem; background: {"#0F172A" if rang % 2 == 0 else "#1E293B"}; border-radius: 6px; margin-bottom: 0.25rem;"><div style="width: 32px; height: 32px; background: linear-gradient(135deg, #2E86AB 0%, #1E3A5F 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; margin-right: 0.75rem;">{rang}</div><div style="flex: 1;"><div style="color: #FFFFFF; font-weight: 600; font-size: 0.95rem;">{row["idcomtxt"]}</div><div style="color: #94A3B8; font-size: 0.8rem;">{dept} - Pop: {pop_str}</div></div><div style="color: #48BB78; font-weight: 700; font-size: 1rem;">{row["artif_total_ha"]:.1f} ha</div></div>', unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
 
 
+def render_communes_map_with_destinations(df_top: pd.DataFrame, dest_cols: list, dest_names: list, dest_colors: list):
+    """
+    Affiche une carte des communes avec des marqueurs en diagrammes circulaires
+    montrant la proportion de chaque destination d'artificialisation
+    """
+    try:
+        import folium
+        import requests
+        import math
+    except ImportError:
+        raise Exception("Folium non installe - pip install folium")
+    
+    # Recuperer les coordonnees via API + données par destination
+    coords_data = []
+    for _, row in df_top.iterrows():
+        code_insee = str(row["idcom"]).zfill(5)
+        try:
+            resp = requests.get(
+                f"https://geo.api.gouv.fr/communes/{code_insee}?fields=centre",
+                timeout=3
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                if "centre" in data and data["centre"]:
+                    coords = data["centre"]["coordinates"]
+                    # Récupérer les valeurs par destination
+                    dest_values = []
+                    for col in dest_cols:
+                        val = row.get(col, 0)
+                        dest_values.append(val if pd.notna(val) else 0)
+                    
+                    coords_data.append({
+                        "code": code_insee,
+                        "lon": coords[0],
+                        "lat": coords[1],
+                        "nom": row["idcomtxt"],
+                        "artif": row["artif_total_ha"],
+                        "destinations": dest_values,
+                    })
+        except:
+            continue
+    
+    if len(coords_data) < 2:
+        raise Exception("Impossible de recuperer les coordonnees geographiques")
+    
+    # Calculer le centre de la carte
+    lats = [c["lat"] for c in coords_data]
+    lons = [c["lon"] for c in coords_data]
+    center_lat = sum(lats) / len(lats)
+    center_lon = sum(lons) / len(lons)
+    
+    # Creer la carte Folium avec fond sombre
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=9,
+        tiles="CartoDB dark_matter",
+    )
+    
+    # Ajouter les marqueurs avec mini pie charts
+    max_artif = max(c["artif"] for c in coords_data)
+    
+    for coord in coords_data:
+        # Taille du marqueur proportionnelle (entre 30 et 70 pixels)
+        size = max(30, min(70, 30 + (coord["artif"] / max_artif) * 40))
+        
+        # Créer un SVG pie chart
+        svg_pie = create_svg_pie_chart(
+            values=coord["destinations"],
+            colors=dest_colors,
+            size=size
+        )
+        
+        # Popup détaillé
+        popup_html = f"""
+        <div style="font-family: Arial; min-width: 180px;">
+            <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #1E293B;">{coord['nom']}</div>
+            <div style="font-size: 12px; color: #64748B; margin-bottom: 6px;">Total: <b>{coord['artif']:.1f} ha</b></div>
+            <hr style="margin: 6px 0; border-color: #E2E8F0;">
+        """
+        for name, val, color in zip(dest_names, coord["destinations"], dest_colors):
+            if val > 0:
+                popup_html += f'<div style="display: flex; align-items: center; margin: 3px 0;"><span style="width: 10px; height: 10px; background: {color}; border-radius: 2px; margin-right: 6px;"></span><span style="flex: 1; font-size: 11px;">{name}</span><span style="font-weight: bold; font-size: 11px;">{val:.1f} ha</span></div>'
+        popup_html += "</div>"
+        
+        # Ajouter le marqueur avec le pie chart
+        folium.Marker(
+            location=[coord["lat"], coord["lon"]],
+            icon=folium.DivIcon(
+                html=svg_pie,
+                icon_size=(size, size),
+                icon_anchor=(size/2, size/2),
+            ),
+            popup=folium.Popup(popup_html, max_width=250),
+            tooltip=f"{coord['nom']}: {coord['artif']:.1f} ha",
+        ).add_to(m)
+        
+        # Label avec nom de la commune
+        folium.Marker(
+            location=[coord["lat"], coord["lon"]],
+            icon=folium.DivIcon(
+                html=f'<div style="font-size: 10px; font-weight: bold; color: #FFFFFF; text-align: center; background: rgba(30, 41, 59, 0.9); padding: 2px 6px; border-radius: 3px; white-space: nowrap; transform: translateY({size/2 + 5}px);">{coord["nom"]}</div>',
+                icon_size=(120, 20),
+                icon_anchor=(60, 0),
+            ),
+        ).add_to(m)
+    
+    # Légende
+    legend_html = """
+    <div style="position: fixed; bottom: 20px; left: 20px; z-index: 1000; background: rgba(30, 41, 59, 0.95); padding: 12px 16px; border-radius: 8px; font-family: Arial; border: 1px solid #475569;">
+        <div style="font-weight: bold; color: #FFFFFF; margin-bottom: 8px; font-size: 12px;">DESTINATIONS</div>
+    """
+    for name, color in zip(dest_names, dest_colors):
+        legend_html += f'<div style="display: flex; align-items: center; margin: 4px 0;"><span style="width: 12px; height: 12px; background: {color}; border-radius: 2px; margin-right: 8px;"></span><span style="color: #CBD5E0; font-size: 11px;">{name}</span></div>'
+    legend_html += "</div>"
+    
+    m.get_root().html.add_child(folium.Element(legend_html))
+    
+    # Afficher la carte
+    import streamlit.components.v1 as components
+    html_str = m._repr_html_()
+    components.html(html_str, height=500, scrolling=False)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def create_svg_pie_chart(values: list, colors: list, size: int = 50) -> str:
+    """
+    Crée un SVG représentant un diagramme circulaire
+    """
+    import math
+    
+    total = sum(values)
+    if total == 0:
+        # Cercle vide
+        return f'<svg width="{size}" height="{size}"><circle cx="{size/2}" cy="{size/2}" r="{size/2 - 2}" fill="#64748B" stroke="#1E293B" stroke-width="2"/></svg>'
+    
+    # Centre et rayon
+    cx, cy = size / 2, size / 2
+    r = size / 2 - 2
+    
+    # Construire les segments du pie chart
+    svg_parts = [f'<svg width="{size}" height="{size}" viewBox="0 0 {size} {size}">']
+    
+    start_angle = -90  # Commencer en haut
+    
+    for val, color in zip(values, colors):
+        if val <= 0:
+            continue
+        
+        # Angle du segment
+        angle = (val / total) * 360
+        end_angle = start_angle + angle
+        
+        # Convertir en radians
+        start_rad = math.radians(start_angle)
+        end_rad = math.radians(end_angle)
+        
+        # Points de l'arc
+        x1 = cx + r * math.cos(start_rad)
+        y1 = cy + r * math.sin(start_rad)
+        x2 = cx + r * math.cos(end_rad)
+        y2 = cy + r * math.sin(end_rad)
+        
+        # Flag pour arc > 180°
+        large_arc = 1 if angle > 180 else 0
+        
+        # Path SVG
+        path = f'M {cx},{cy} L {x1},{y1} A {r},{r} 0 {large_arc},1 {x2},{y2} Z'
+        svg_parts.append(f'<path d="{path}" fill="{color}" stroke="#1E293B" stroke-width="1"/>')
+        
+        start_angle = end_angle
+    
+    # Bordure extérieure
+    svg_parts.append(f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="#1E293B" stroke-width="2"/>')
+    svg_parts.append('</svg>')
+    
+    return ''.join(svg_parts)
+
+
 def render_communes_map(df_top: pd.DataFrame):
     """
-    Affiche une carte des communes - VERSION CORRIGEE avec Folium
+    Affiche une carte des communes - VERSION SIMPLE (fallback)
     """
     try:
         import folium
@@ -1341,14 +1506,13 @@ def render_communes_map(df_top: pd.DataFrame):
     m = folium.Map(
         location=[center_lat, center_lon],
         zoom_start=9,
-        tiles="CartoDB positron",
+        tiles="CartoDB dark_matter",
     )
     
     # Ajouter les marqueurs
     max_artif = max(c["artif"] for c in coords_data)
     
     for coord in coords_data:
-        # Taille du marqueur proportionnelle
         radius = max(8, min(25, coord["artif"] / max_artif * 20))
         
         folium.CircleMarker(
@@ -1356,23 +1520,13 @@ def render_communes_map(df_top: pd.DataFrame):
             radius=radius,
             popup=f"<b>{coord['nom']}</b><br>{coord['artif']:.1f} ha",
             tooltip=f"{coord['nom']}: {coord['artif']:.1f} ha",
-            color="#1E3A5F",
+            color="#1E293B",
             fillColor="#2E86AB",
             fillOpacity=0.7,
             weight=2,
         ).add_to(m)
-        
-        # Label avec nom
-        folium.Marker(
-            location=[coord["lat"], coord["lon"]],
-            icon=folium.DivIcon(
-                html=f'<div style="font-size: 10px; font-weight: bold; color: #1E3A5F; text-align: center; background: rgba(255,255,255,0.8); padding: 2px 4px; border-radius: 3px;">{coord["nom"][:15]}</div>',
-                icon_size=(100, 20),
-                icon_anchor=(50, 10),
-            ),
-        ).add_to(m)
     
-    # Afficher la carte avec st.components.v1.html
+    # Afficher la carte
     import streamlit.components.v1 as components
     html_str = m._repr_html_()
     components.html(html_str, height=400, scrolling=False)
