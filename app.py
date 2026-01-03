@@ -18,7 +18,6 @@ from components.charts import (
     render_repartition_chart,
     render_top_communes_chart,
     render_trajectory_chart,
-    render_efficience_chart,
     render_typologie_chart,
     render_jauge_zan_communes,
     render_densification_evolution,
@@ -156,15 +155,11 @@ if data_loaded:
     # SECTION 4: Analyses avancées
     render_section_header("Analyses Avancées", icon="", description="Indicateurs stratégiques pour le pilotage territorial")
     
-    tab_eff, tab_typo, tab_jauge, tab_dens = st.tabs([
-        "Efficience Urbanisation", 
+    tab_typo, tab_jauge, tab_dens = st.tabs([
         "Analyse par Typologie", 
         "Risques Communaux",
         "Évolution Densification"
     ])
-    
-    with tab_eff:
-        render_efficience_chart(df_filtered)
     
     with tab_typo:
         render_typologie_chart(df_filtered)

@@ -324,21 +324,30 @@ def render_efficience_chart(df: pd.DataFrame):
 def render_typologie_chart(df: pd.DataFrame):
     """
     Infographie 2: Analyse par Typologie Territoriale
-    Barres groupées + donut par typologie AAV
+    Barres groupées + donut par typologie AAV - VERSION OPTIMISÉE
     """
     
+    # Labels courts pour l'axe X
     typo_labels = {
-        "11": "Pôles principaux",
+        "11": "Pôles",
         "12": "Couronnes",
-        "20": "Petites/moyennes aires",
-        "30": "Hors attraction",
+        "20": "P/M aires",
+        "30": "Rural",
+    }
+    
+    # Labels complets pour légende et tooltip
+    typo_labels_full = {
+        "Pôles": "Pôles principaux",
+        "Couronnes": "Couronnes grandes aires",
+        "P/M aires": "Petites/moyennes aires",
+        "Rural": "Hors attraction (rural)",
     }
     
     typo_colors = {
-        "Pôles principaux": "#2E86AB",
+        "Pôles": "#2E86AB",
         "Couronnes": "#A23B72",
-        "Petites/moyennes aires": "#48BB78",
-        "Hors attraction": "#ED8936",
+        "P/M aires": "#48BB78",
+        "Rural": "#ED8936",
     }
     
     # Agrégation par typologie
@@ -366,7 +375,18 @@ def render_typologie_chart(df: pd.DataFrame):
         0
     )
     
-    col1, col2 = st.columns([1.2, 0.8])
+    # Ajouter labels complets pour affichage
+    agg_data["typo_full"] = agg_data["typo_label"].map(typo_labels_full).fillna(agg_data["typo_label"])
+    
+    # ===== GRAPHIQUE BARRES GROUPÉES =====
+    st.markdown("""
+<div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+<div style="color: #FFFFFF; font-weight: 700; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">ARTIFICIALISATION PAR TYPOLOGIE</div>
+<div style="color: #94A3B8; font-size: 0.8rem; margin-top: 0.25rem;">Répartition par destination et type de territoire</div>
+</div>
+""", unsafe_allow_html=True)
+    
+    col1, col2 = st.columns([1.5, 1])
     
     with col1:
         # Barres groupées par destination
@@ -376,29 +396,25 @@ def render_typologie_chart(df: pd.DataFrame):
         
         fig = go.Figure()
         
-        for dest, col, color in zip(destinations, dest_cols, dest_colors):
+        for dest, col_name, color in zip(destinations, dest_cols, dest_colors):
             fig.add_trace(
                 go.Bar(
                     name=dest,
                     x=agg_data["typo_label"],
-                    y=agg_data[col],
+                    y=agg_data[col_name],
                     marker_color=color,
-                    text=agg_data[col].apply(lambda x: f"{x:.0f}"),
-                    textposition="auto",
-                    textfont=dict(size=10, color="#FFFFFF"),
+                    text=agg_data[col_name].apply(lambda x: f"{x:.0f}" if x >= 5 else ""),
+                    textposition="inside",
+                    textfont=dict(size=9, color="#FFFFFF"),
+                    hovertemplate="<b>%{x}</b><br>" + dest + ": %{y:.1f} ha<extra></extra>",
                 )
             )
         
         fig.update_layout(
-            title=dict(
-                text="ARTIFICIALISATION PAR TYPOLOGIE TERRITORIALE",
-                font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
-                x=0.5,
-            ),
             xaxis=dict(
                 title="",
-                tickfont=dict(size=11, color="#94A3B8"),
-                tickangle=-15,
+                tickfont=dict(size=12, color="#FFFFFF"),
+                tickangle=0,
             ),
             yaxis=dict(
                 title="Hectares",
@@ -407,84 +423,92 @@ def render_typologie_chart(df: pd.DataFrame):
             ),
             barmode="group",
             template="plotly_dark",
-            height=400,
+            height=350,
             legend=dict(
                 orientation="h",
-                yanchor="bottom",
-                y=-0.25,
+                yanchor="top",
+                y=1.15,
                 xanchor="center",
                 x=0.5,
-                font=dict(size=10, color="#CBD5E0"),
+                font=dict(size=11, color="#CBD5E0"),
+                bgcolor="rgba(0,0,0,0)",
             ),
-            margin=dict(t=60, b=80, l=60, r=20),
+            margin=dict(t=50, b=40, l=60, r=20),
             paper_bgcolor="#1E293B",
             plot_bgcolor="#0F172A",
+            bargap=0.15,
+            bargroupgap=0.1,
         )
         
         st.plotly_chart(fig, use_container_width=True)
     
     with col2:
-        # Donut répartition globale
-        labels = agg_data["typo_label"].tolist()
+        # Donut répartition globale avec légende
+        labels = agg_data["typo_full"].tolist()
+        labels_short = agg_data["typo_label"].tolist()
         values = agg_data["naf09art24"].tolist()
-        colors = [typo_colors.get(l, "#64748B") for l in labels]
+        colors = [typo_colors.get(l, "#64748B") for l in labels_short]
         
         fig2 = go.Figure(data=[go.Pie(
             labels=labels,
             values=values,
-            hole=0.55,
+            hole=0.5,
             marker=dict(colors=colors, line=dict(color="#1E293B", width=2)),
             textinfo="percent",
-            textfont=dict(size=12, color="#FFFFFF"),
+            textposition="outside",
+            textfont=dict(size=11, color="#FFFFFF"),
             hovertemplate="<b>%{label}</b><br>%{value:.1f} ha (%{percent})<extra></extra>",
+            pull=[0.02] * len(labels),
         )])
         
         total = sum(values)
         fig2.update_layout(
-            title=dict(
-                text="RÉPARTITION GLOBALE",
-                font=dict(size=14, color="#FFFFFF", family="Segoe UI"),
-                x=0.5,
+            showlegend=True,
+            legend=dict(
+                orientation="v",
+                yanchor="middle",
+                y=0.5,
+                xanchor="left",
+                x=1.02,
+                font=dict(size=10, color="#CBD5E0"),
+                bgcolor="rgba(0,0,0,0)",
             ),
-            showlegend=False,
-            height=400,
-            margin=dict(t=60, b=20, l=20, r=20),
+            height=350,
+            margin=dict(t=20, b=20, l=20, r=120),
             paper_bgcolor="#1E293B",
             annotations=[dict(
-                text=f"<b>{total:.0f}</b><br>ha",
+                text=f"<b>{total:.0f}</b><br><span style='font-size:12px'>ha</span>",
                 x=0.5, y=0.5,
-                font=dict(size=18, color="#FFFFFF"),
+                font=dict(size=20, color="#FFFFFF"),
                 showarrow=False,
             )],
         )
         
         st.plotly_chart(fig2, use_container_width=True)
     
-    # Tableau récapitulatif
+    # ===== TABLEAU RÉCAPITULATIF =====
     st.markdown("""
 <div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-top: 1rem;">
-<div style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">INDICATEUR D'EFFICIENCE PAR TYPOLOGIE</div>
+<div style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">SYNTHÈSE PAR TYPOLOGIE</div>
 """, unsafe_allow_html=True)
     
     for _, row in agg_data.iterrows():
         typo = row["typo_label"]
+        typo_full = row["typo_full"]
         artif = row["naf09art24"]
         eff = row["efficience"]
         
         # Couleur selon efficience
         if eff < 200:
             eff_color = "#48BB78"
-            eff_label = "Efficient"
         elif eff < 500:
             eff_color = "#ED8936"
-            eff_label = "Standard"
         else:
             eff_color = "#F56565"
-            eff_label = "Consommateur"
         
         st.markdown(f"""
 <div style="display: flex; align-items: center; padding: 0.75rem; background: #0F172A; border-radius: 6px; margin-bottom: 0.5rem; border-left: 4px solid {typo_colors.get(typo, '#64748B')};">
-<div style="flex: 1; color: #FFFFFF; font-weight: 600;">{typo}</div>
+<div style="flex: 1; color: #FFFFFF; font-weight: 600;">{typo_full}</div>
 <div style="color: #94A3B8; font-size: 0.85rem; margin-right: 1rem;">{artif:.0f} ha</div>
 <div style="background: {eff_color}; color: #0F172A; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">{eff:.0f} m²/hab</div>
 </div>
