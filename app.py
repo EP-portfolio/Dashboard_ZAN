@@ -18,6 +18,11 @@ from components.charts import (
     render_repartition_chart,
     render_top_communes_chart,
     render_trajectory_chart,
+    render_efficience_chart,
+    render_typologie_chart,
+    render_jauge_zan_communes,
+    render_densification_evolution,
+    render_benchmark_radar,
 )
 from components.filters import render_filters
 from components.tables import render_data_table
@@ -134,7 +139,7 @@ if data_loaded:
 '''
         st.markdown(html_gauge, unsafe_allow_html=True)
     
-    # SECTION 3: Graphiques
+    # SECTION 3: Graphiques de base
     render_section_header("Analyse Détaillée", icon="", description="Exploration approfondie des données d'artificialisation")
     
     tab1, tab2, tab3 = st.tabs(["Évolution Annuelle", "Répartition par Destination", "Top Communes"])
@@ -148,7 +153,33 @@ if data_loaded:
     with tab3:
         render_top_communes_chart(df_filtered, n_top=10)
     
-    # SECTION 4: Tableau
+    # SECTION 4: Analyses avancées
+    render_section_header("Analyses Avancées", icon="", description="Indicateurs stratégiques pour le pilotage territorial")
+    
+    tab_eff, tab_typo, tab_jauge, tab_dens = st.tabs([
+        "Efficience Urbanisation", 
+        "Analyse par Typologie", 
+        "Risques Communaux",
+        "Évolution Densification"
+    ])
+    
+    with tab_eff:
+        render_efficience_chart(df_filtered)
+    
+    with tab_typo:
+        render_typologie_chart(df_filtered)
+    
+    with tab_jauge:
+        render_jauge_zan_communes(df_filtered)
+    
+    with tab_dens:
+        render_densification_evolution(df_filtered)
+    
+    # SECTION 5: Benchmark territorial
+    render_section_header("Benchmark Territorial", icon="", description="Comparaison multi-critères entre SCoT et Communauté de Communes")
+    render_benchmark_radar(df_scot, df_cc)
+    
+    # SECTION 6: Tableau
     render_section_header("Données par Commune", icon="", description="Tableau détaillé avec options de recherche, tri et export")
     render_data_table(df_filtered)
     

@@ -164,6 +164,865 @@ def render_evolution_chart(df: pd.DataFrame):
     st.plotly_chart(fig, use_container_width=True)
 
 
+# ============================================
+# NOUVELLES INFOGRAPHIES BUSINESS
+# ============================================
+
+def render_efficience_chart(df: pd.DataFrame):
+    """
+    Infographie 1: Efficience de l'Urbanisation
+    Scatter plot: croissance démographique vs artificialisation
+    """
+    
+    df_plot = df.copy()
+    
+    # Filtrer les communes avec des données valides
+    df_plot = df_plot[
+        (df_plot["pop1521"].notna()) & 
+        (df_plot["artif_total_ha"] > 0)
+    ].copy()
+    
+    # Calculer l'efficience (m² par habitant ajouté)
+    df_plot["efficience"] = np.where(
+        df_plot["pop1521"] > 0,
+        (df_plot["naf09art24"] / df_plot["pop1521"]),
+        np.nan
+    )
+    
+    # Typologie pour la couleur
+    typo_labels = {
+        "11": "Pôle principal",
+        "12": "Couronne grande aire",
+        "20": "Petite/moyenne aire",
+        "30": "Hors attraction",
+    }
+    df_plot["typo_label"] = df_plot["aav2020_typo"].astype(str).map(typo_labels).fillna("Autre")
+    
+    # Couleurs par typologie
+    color_map = {
+        "Pôle principal": "#2E86AB",
+        "Couronne grande aire": "#A23B72",
+        "Petite/moyenne aire": "#48BB78",
+        "Hors attraction": "#ED8936",
+        "Autre": "#64748B",
+    }
+    
+    fig = go.Figure()
+    
+    for typo in color_map.keys():
+        df_typo = df_plot[df_plot["typo_label"] == typo]
+        if len(df_typo) > 0:
+            fig.add_trace(
+                go.Scatter(
+                    x=df_typo["pop1521"],
+                    y=df_typo["artif_total_ha"],
+                    mode="markers",
+                    name=typo,
+                    marker=dict(
+                        size=np.sqrt(df_typo["pop21"]) / 5 + 8,
+                        color=color_map[typo],
+                        opacity=0.7,
+                        line=dict(color="#FFFFFF", width=1),
+                    ),
+                    text=df_typo["idcomtxt"],
+                    hovertemplate=(
+                        "<b>%{text}</b><br>"
+                        "Évolution pop.: %{x:+,}<br>"
+                        "Artificialisation: %{y:.1f} ha<br>"
+                        "<extra></extra>"
+                    ),
+                )
+            )
+    
+    # Lignes de référence (seuils m²/hab)
+    max_pop = max(df_plot["pop1521"].max(), 100)
+    min_pop = min(df_plot["pop1521"].min(), 0)
+    
+    # Seuil 200 m²/hab (efficient)
+    fig.add_trace(
+        go.Scatter(
+            x=[0, max_pop],
+            y=[0, max_pop * 200 / 10000],
+            mode="lines",
+            line=dict(color="#48BB78", dash="dash", width=1.5),
+            name="200 m²/hab (efficient)",
+            showlegend=True,
+        )
+    )
+    
+    # Seuil 500 m²/hab (standard)
+    fig.add_trace(
+        go.Scatter(
+            x=[0, max_pop],
+            y=[0, max_pop * 500 / 10000],
+            mode="lines",
+            line=dict(color="#ED8936", dash="dash", width=1.5),
+            name="500 m²/hab (standard)",
+            showlegend=True,
+        )
+    )
+    
+    fig.update_layout(
+        title=dict(
+            text="EFFICIENCE DE L'URBANISATION",
+            font=dict(size=18, color="#FFFFFF", family="Segoe UI"),
+            x=0.5,
+        ),
+        xaxis=dict(
+            title="Évolution de la population (2015-2021)",
+            tickfont=dict(size=11, color="#94A3B8"),
+            gridcolor="#334155",
+            zerolinecolor="#475569",
+            zerolinewidth=2,
+        ),
+        yaxis=dict(
+            title="Artificialisation (ha)",
+            tickfont=dict(size=11, color="#94A3B8"),
+            gridcolor="#334155",
+        ),
+        template="plotly_dark",
+        height=500,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.25,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=10, color="#CBD5E0"),
+        ),
+        margin=dict(t=80, b=100, l=80, r=40),
+        paper_bgcolor="#1E293B",
+        plot_bgcolor="#0F172A",
+    )
+    
+    # Annotation explicative
+    fig.add_annotation(
+        x=0.02, y=0.98,
+        xref="paper", yref="paper",
+        text="Taille des bulles = Population 2021 | Sous la ligne verte = urbanisation efficiente",
+        showarrow=False,
+        font=dict(size=10, color="#94A3B8"),
+        align="left",
+        bgcolor="rgba(15, 23, 42, 0.8)",
+        bordercolor="#334155",
+        borderwidth=1,
+    )
+    
+    # Source
+    fig.add_annotation(
+        x=0.98, y=0.02,
+        xref="paper", yref="paper",
+        text=get_data_source_text(),
+        showarrow=False,
+        font=dict(size=9, color="#64748B"),
+        align="right",
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def render_typologie_chart(df: pd.DataFrame):
+    """
+    Infographie 2: Analyse par Typologie Territoriale
+    Barres groupées + donut par typologie AAV
+    """
+    
+    typo_labels = {
+        "11": "Pôles principaux",
+        "12": "Couronnes",
+        "20": "Petites/moyennes aires",
+        "30": "Hors attraction",
+    }
+    
+    typo_colors = {
+        "Pôles principaux": "#2E86AB",
+        "Couronnes": "#A23B72",
+        "Petites/moyennes aires": "#48BB78",
+        "Hors attraction": "#ED8936",
+    }
+    
+    # Agrégation par typologie
+    df_copy = df.copy()
+    df_copy["typo_label"] = df_copy["aav2020_typo"].astype(str).map(typo_labels).fillna("Autre")
+    
+    agg_data = df_copy.groupby("typo_label").agg({
+        "naf09art24": "sum",
+        "art09hab24": "sum",
+        "art09act24": "sum",
+        "art09mix24": "sum",
+        "art09rou24": "sum",
+        "pop1521": "sum",
+        "pop21": "sum",
+    }).reset_index()
+    
+    # Conversion en hectares
+    for col in ["naf09art24", "art09hab24", "art09act24", "art09mix24", "art09rou24"]:
+        agg_data[col] = agg_data[col] / 10000
+    
+    # Calcul efficience
+    agg_data["efficience"] = np.where(
+        agg_data["pop1521"] > 0,
+        agg_data["naf09art24"] * 10000 / agg_data["pop1521"],
+        0
+    )
+    
+    col1, col2 = st.columns([1.2, 0.8])
+    
+    with col1:
+        # Barres groupées par destination
+        destinations = ["Habitat", "Activités", "Mixte", "Routes"]
+        dest_cols = ["art09hab24", "art09act24", "art09mix24", "art09rou24"]
+        dest_colors = ["#48BB78", "#ED8936", "#2E86AB", "#64748B"]
+        
+        fig = go.Figure()
+        
+        for dest, col, color in zip(destinations, dest_cols, dest_colors):
+            fig.add_trace(
+                go.Bar(
+                    name=dest,
+                    x=agg_data["typo_label"],
+                    y=agg_data[col],
+                    marker_color=color,
+                    text=agg_data[col].apply(lambda x: f"{x:.0f}"),
+                    textposition="auto",
+                    textfont=dict(size=10, color="#FFFFFF"),
+                )
+            )
+        
+        fig.update_layout(
+            title=dict(
+                text="ARTIFICIALISATION PAR TYPOLOGIE TERRITORIALE",
+                font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
+                x=0.5,
+            ),
+            xaxis=dict(
+                title="",
+                tickfont=dict(size=11, color="#94A3B8"),
+                tickangle=-15,
+            ),
+            yaxis=dict(
+                title="Hectares",
+                tickfont=dict(size=11, color="#94A3B8"),
+                gridcolor="#334155",
+            ),
+            barmode="group",
+            template="plotly_dark",
+            height=400,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=-0.25,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=10, color="#CBD5E0"),
+            ),
+            margin=dict(t=60, b=80, l=60, r=20),
+            paper_bgcolor="#1E293B",
+            plot_bgcolor="#0F172A",
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # Donut répartition globale
+        labels = agg_data["typo_label"].tolist()
+        values = agg_data["naf09art24"].tolist()
+        colors = [typo_colors.get(l, "#64748B") for l in labels]
+        
+        fig2 = go.Figure(data=[go.Pie(
+            labels=labels,
+            values=values,
+            hole=0.55,
+            marker=dict(colors=colors, line=dict(color="#1E293B", width=2)),
+            textinfo="percent",
+            textfont=dict(size=12, color="#FFFFFF"),
+            hovertemplate="<b>%{label}</b><br>%{value:.1f} ha (%{percent})<extra></extra>",
+        )])
+        
+        total = sum(values)
+        fig2.update_layout(
+            title=dict(
+                text="RÉPARTITION GLOBALE",
+                font=dict(size=14, color="#FFFFFF", family="Segoe UI"),
+                x=0.5,
+            ),
+            showlegend=False,
+            height=400,
+            margin=dict(t=60, b=20, l=20, r=20),
+            paper_bgcolor="#1E293B",
+            annotations=[dict(
+                text=f"<b>{total:.0f}</b><br>ha",
+                x=0.5, y=0.5,
+                font=dict(size=18, color="#FFFFFF"),
+                showarrow=False,
+            )],
+        )
+        
+        st.plotly_chart(fig2, use_container_width=True)
+    
+    # Tableau récapitulatif
+    st.markdown("""
+<div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-top: 1rem;">
+<div style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">INDICATEUR D'EFFICIENCE PAR TYPOLOGIE</div>
+""", unsafe_allow_html=True)
+    
+    for _, row in agg_data.iterrows():
+        typo = row["typo_label"]
+        artif = row["naf09art24"]
+        eff = row["efficience"]
+        
+        # Couleur selon efficience
+        if eff < 200:
+            eff_color = "#48BB78"
+            eff_label = "Efficient"
+        elif eff < 500:
+            eff_color = "#ED8936"
+            eff_label = "Standard"
+        else:
+            eff_color = "#F56565"
+            eff_label = "Consommateur"
+        
+        st.markdown(f"""
+<div style="display: flex; align-items: center; padding: 0.75rem; background: #0F172A; border-radius: 6px; margin-bottom: 0.5rem; border-left: 4px solid {typo_colors.get(typo, '#64748B')};">
+<div style="flex: 1; color: #FFFFFF; font-weight: 600;">{typo}</div>
+<div style="color: #94A3B8; font-size: 0.85rem; margin-right: 1rem;">{artif:.0f} ha</div>
+<div style="background: {eff_color}; color: #0F172A; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">{eff:.0f} m²/hab</div>
+</div>
+""", unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+def render_jauge_zan_communes(df: pd.DataFrame):
+    """
+    Infographie 3: Jauge ZAN par Commune
+    Heatmap du taux de consommation de l'enveloppe individuelle
+    """
+    
+    df_calc = df.copy()
+    
+    # Calcul de l'enveloppe individuelle par commune
+    cols_ref = ["naf11art12", "naf12art13", "naf13art14", "naf14art15", "naf15art16",
+                "naf16art17", "naf17art18", "naf18art19", "naf19art20", "naf20art21"]
+    
+    cols_recent = ["naf21art22", "naf22art23", "naf23art24"]
+    
+    df_calc["conso_ref"] = 0
+    for col in cols_ref:
+        if col in df_calc.columns:
+            df_calc["conso_ref"] += df_calc[col] / 10000
+    
+    df_calc["enveloppe_commune"] = df_calc["conso_ref"] * 0.5
+    
+    df_calc["conso_2124"] = 0
+    for col in cols_recent:
+        if col in df_calc.columns:
+            df_calc["conso_2124"] += df_calc[col] / 10000
+    
+    # Taux de consommation
+    df_calc["taux_conso"] = np.where(
+        df_calc["enveloppe_commune"] > 0,
+        (df_calc["conso_2124"] / df_calc["enveloppe_commune"]) * 100,
+        0
+    )
+    
+    # Classification
+    def get_statut(taux):
+        if taux < 30:
+            return "Conforme", "#48BB78"
+        elif taux < 50:
+            return "Vigilance", "#ED8936"
+        else:
+            return "Alerte", "#F56565"
+    
+    df_calc["statut"], df_calc["couleur"] = zip(*df_calc["taux_conso"].apply(get_statut))
+    
+    # Top 15 communes à risque
+    df_risque = df_calc.nlargest(15, "taux_conso")[
+        ["idcomtxt", "enveloppe_commune", "conso_2124", "taux_conso", "statut", "couleur"]
+    ].reset_index(drop=True)
+    
+    col1, col2 = st.columns([1.5, 1])
+    
+    with col1:
+        # Graphique barres horizontales
+        df_plot = df_risque.sort_values("taux_conso", ascending=True)
+        
+        fig = go.Figure()
+        
+        fig.add_trace(
+            go.Bar(
+                y=df_plot["idcomtxt"],
+                x=df_plot["taux_conso"],
+                orientation="h",
+                marker=dict(
+                    color=df_plot["couleur"].tolist(),
+                    line=dict(color="#1E293B", width=1),
+                ),
+                text=df_plot["taux_conso"].apply(lambda x: f"{x:.0f}%"),
+                textposition="outside",
+                textfont=dict(size=11, color="#FFFFFF"),
+                hovertemplate=(
+                    "<b>%{y}</b><br>"
+                    "Taux: %{x:.1f}%<br>"
+                    "<extra></extra>"
+                ),
+            )
+        )
+        
+        # Lignes de seuils
+        fig.add_vline(x=30, line_dash="dash", line_color="#48BB78", line_width=2)
+        fig.add_vline(x=50, line_dash="dash", line_color="#ED8936", line_width=2)
+        fig.add_vline(x=100, line_dash="solid", line_color="#F56565", line_width=2)
+        
+        fig.update_layout(
+            title=dict(
+                text="COMMUNES À RISQUE DE DÉPASSEMENT ZAN",
+                font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
+                x=0.5,
+            ),
+            xaxis=dict(
+                title="% de l'enveloppe ZAN consommée",
+                tickfont=dict(size=11, color="#94A3B8"),
+                gridcolor="#334155",
+                range=[0, max(df_risque["taux_conso"].max() * 1.2, 110)],
+            ),
+            yaxis=dict(
+                title="",
+                tickfont=dict(size=10, color="#FFFFFF"),
+            ),
+            template="plotly_dark",
+            height=500,
+            showlegend=False,
+            margin=dict(t=60, b=60, l=160, r=60),
+            paper_bgcolor="#1E293B",
+            plot_bgcolor="#0F172A",
+        )
+        
+        # Légende des seuils
+        fig.add_annotation(
+            x=0.98, y=0.98,
+            xref="paper", yref="paper",
+            text="<30% Conforme | 30-50% Vigilance | >50% Alerte",
+            showarrow=False,
+            font=dict(size=9, color="#94A3B8"),
+            align="right",
+            bgcolor="rgba(15, 23, 42, 0.8)",
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # Résumé statistique
+        nb_conforme = len(df_calc[df_calc["statut"] == "Conforme"])
+        nb_vigilance = len(df_calc[df_calc["statut"] == "Vigilance"])
+        nb_alerte = len(df_calc[df_calc["statut"] == "Alerte"])
+        total = len(df_calc)
+        
+        st.markdown(f"""
+<div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem;">
+<div style="color: #FFFFFF; font-weight: 700; font-size: 1rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #334155; padding-bottom: 0.75rem;">SYNTHÈSE DU TERRITOIRE</div>
+
+<div style="display: flex; align-items: center; padding: 1rem; background: rgba(72, 187, 120, 0.15); border-left: 4px solid #48BB78; border-radius: 0 6px 6px 0; margin-bottom: 0.75rem;">
+<div style="flex: 1;">
+<div style="color: #48BB78; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Conforme</div>
+<div style="color: #FFFFFF; font-size: 1.5rem; font-weight: 700;">{nb_conforme}</div>
+</div>
+<div style="color: #94A3B8; font-size: 0.9rem;">{nb_conforme/total*100:.0f}%</div>
+</div>
+
+<div style="display: flex; align-items: center; padding: 1rem; background: rgba(237, 137, 54, 0.15); border-left: 4px solid #ED8936; border-radius: 0 6px 6px 0; margin-bottom: 0.75rem;">
+<div style="flex: 1;">
+<div style="color: #ED8936; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Vigilance</div>
+<div style="color: #FFFFFF; font-size: 1.5rem; font-weight: 700;">{nb_vigilance}</div>
+</div>
+<div style="color: #94A3B8; font-size: 0.9rem;">{nb_vigilance/total*100:.0f}%</div>
+</div>
+
+<div style="display: flex; align-items: center; padding: 1rem; background: rgba(245, 101, 101, 0.15); border-left: 4px solid #F56565; border-radius: 0 6px 6px 0;">
+<div style="flex: 1;">
+<div style="color: #F56565; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Alerte</div>
+<div style="color: #FFFFFF; font-size: 1.5rem; font-weight: 700;">{nb_alerte}</div>
+</div>
+<div style="color: #94A3B8; font-size: 0.9rem;">{nb_alerte/total*100:.0f}%</div>
+</div>
+
+<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #334155;">
+<div style="color: #94A3B8; font-size: 0.8rem; line-height: 1.5;">
+<strong>Méthodologie</strong><br>
+Enveloppe = Conso. 2011-2021 × 50%<br>
+Taux = Conso. 2021-2024 / Enveloppe
+</div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+
+def render_densification_evolution(df: pd.DataFrame):
+    """
+    Infographie 4: Évolution de la Densification
+    Comparaison du ratio m²/habitant par période
+    """
+    
+    # Définition des périodes
+    periodes = [
+        {
+            "nom": "2009-2015",
+            "cols_artif": ["naf09art10", "naf10art11", "naf11art12", "naf12art13", "naf13art14", "naf14art15"],
+            "pop_debut": "pop15",
+            "pop_fin": "pop15",  # Approximation
+        },
+        {
+            "nom": "2015-2021",
+            "cols_artif": ["naf15art16", "naf16art17", "naf17art18", "naf18art19", "naf19art20", "naf20art21"],
+            "pop_col": "pop1521",
+        },
+        {
+            "nom": "2021-2024",
+            "cols_artif": ["naf21art22", "naf22art23", "naf23art24"],
+            "pop_col": None,  # Sera calculé proportionnellement
+        },
+    ]
+    
+    data_periodes = []
+    
+    # Période 2015-2021
+    artif_1521 = 0
+    for col in ["naf15art16", "naf16art17", "naf17art18", "naf18art19", "naf19art20", "naf20art21"]:
+        if col in df.columns:
+            artif_1521 += df[col].sum()
+    pop_1521 = df["pop1521"].sum()
+    
+    if pop_1521 > 0:
+        ratio_1521 = artif_1521 / pop_1521
+    else:
+        ratio_1521 = 0
+    
+    data_periodes.append({
+        "Période": "2015-2021 (Réf.)",
+        "Ratio": ratio_1521,
+        "Artificialisation": artif_1521 / 10000,
+        "Pop_evolution": pop_1521,
+    })
+    
+    # Période 2021-2024 (estimation évolution pop proportionnelle)
+    artif_2124 = 0
+    for col in ["naf21art22", "naf22art23", "naf23art24"]:
+        if col in df.columns:
+            artif_2124 += df[col].sum()
+    
+    # Estimation évolution pop 2021-2024 (proportionnelle à 2015-2021)
+    pop_2124_est = pop_1521 * (3/6)  # 3 ans vs 6 ans
+    
+    if pop_2124_est > 0:
+        ratio_2124 = artif_2124 / pop_2124_est
+    else:
+        ratio_2124 = artif_2124 / 1 if artif_2124 > 0 else 0
+    
+    data_periodes.append({
+        "Période": "2021-2024 (ZAN)",
+        "Ratio": ratio_2124,
+        "Artificialisation": artif_2124 / 10000,
+        "Pop_evolution": pop_2124_est,
+    })
+    
+    df_periodes = pd.DataFrame(data_periodes)
+    
+    col1, col2 = st.columns([1.2, 0.8])
+    
+    with col1:
+        fig = go.Figure()
+        
+        colors = ["#2E86AB", "#A23B72"]
+        
+        fig.add_trace(
+            go.Bar(
+                x=df_periodes["Période"],
+                y=df_periodes["Ratio"],
+                marker=dict(
+                    color=colors,
+                    line=dict(color="#1E293B", width=2),
+                ),
+                text=df_periodes["Ratio"].apply(lambda x: f"{x:.0f} m²/hab"),
+                textposition="outside",
+                textfont=dict(size=14, color="#FFFFFF", family="Segoe UI"),
+                hovertemplate=(
+                    "<b>%{x}</b><br>"
+                    "Ratio: %{y:.0f} m²/hab<br>"
+                    "<extra></extra>"
+                ),
+            )
+        )
+        
+        # Lignes de référence
+        fig.add_hline(y=200, line_dash="dash", line_color="#48BB78", line_width=2,
+                      annotation_text="Objectif efficient (200)", annotation_position="right",
+                      annotation_font=dict(size=10, color="#48BB78"))
+        
+        fig.add_hline(y=500, line_dash="dash", line_color="#ED8936", line_width=2,
+                      annotation_text="Seuil consommateur (500)", annotation_position="right",
+                      annotation_font=dict(size=10, color="#ED8936"))
+        
+        fig.update_layout(
+            title=dict(
+                text="ÉVOLUTION DE L'EFFICIENCE D'URBANISATION",
+                font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
+                x=0.5,
+            ),
+            xaxis=dict(
+                title="",
+                tickfont=dict(size=12, color="#FFFFFF"),
+            ),
+            yaxis=dict(
+                title="m² artificialisés par habitant ajouté",
+                tickfont=dict(size=11, color="#94A3B8"),
+                gridcolor="#334155",
+            ),
+            template="plotly_dark",
+            height=400,
+            showlegend=False,
+            margin=dict(t=60, b=40, l=80, r=120),
+            paper_bgcolor="#1E293B",
+            plot_bgcolor="#0F172A",
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # Analyse de la tendance
+        if len(df_periodes) >= 2:
+            ratio_avant = df_periodes.iloc[0]["Ratio"]
+            ratio_apres = df_periodes.iloc[1]["Ratio"]
+            variation = ((ratio_apres - ratio_avant) / ratio_avant * 100) if ratio_avant > 0 else 0
+            
+            if variation < -10:
+                tendance = "AMÉLIORATION"
+                tendance_color = "#48BB78"
+                tendance_icon = "↓"
+            elif variation > 10:
+                tendance = "DÉGRADATION"
+                tendance_color = "#F56565"
+                tendance_icon = "↑"
+            else:
+                tendance = "STABLE"
+                tendance_color = "#ED8936"
+                tendance_icon = "→"
+            
+            st.markdown(f"""
+<div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem;">
+<div style="color: #FFFFFF; font-weight: 700; font-size: 1rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #334155; padding-bottom: 0.75rem;">ANALYSE DE TENDANCE</div>
+
+<div style="text-align: center; padding: 1.5rem; background: rgba(100, 100, 100, 0.15); border-radius: 8px; margin-bottom: 1.5rem;">
+<div style="font-size: 3rem; margin-bottom: 0.5rem;">{tendance_icon}</div>
+<div style="color: {tendance_color}; font-size: 1.25rem; font-weight: 700;">{tendance}</div>
+<div style="color: #94A3B8; font-size: 0.85rem; margin-top: 0.25rem;">{variation:+.0f}% vs période précédente</div>
+</div>
+
+<div style="background: #0F172A; border-radius: 6px; padding: 1rem; margin-bottom: 0.75rem;">
+<div style="color: #94A3B8; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.25rem;">Période 2015-2021</div>
+<div style="color: #FFFFFF; font-size: 1.25rem; font-weight: 700;">{ratio_avant:.0f} m²/hab</div>
+</div>
+
+<div style="background: #0F172A; border-radius: 6px; padding: 1rem;">
+<div style="color: #94A3B8; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.25rem;">Période 2021-2024 (ZAN)</div>
+<div style="color: #FFFFFF; font-size: 1.25rem; font-weight: 700;">{ratio_apres:.0f} m²/hab</div>
+</div>
+
+<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #334155; color: #64748B; font-size: 0.75rem; line-height: 1.4;">
+<em>Note: L'évolution de population 2021-2024 est estimée proportionnellement à la période précédente.</em>
+</div>
+</div>
+""", unsafe_allow_html=True)
+
+
+def render_benchmark_radar(df_scot: pd.DataFrame, df_cc: pd.DataFrame):
+    """
+    Infographie 5: Benchmark SCoT vs CCPDA
+    Radar chart multi-critères
+    """
+    
+    def calc_metrics(df, name):
+        total_pop = df["pop21"].sum()
+        total_artif = df["naf09art24"].sum() / 10000
+        evolution_pop = df["pop1521"].sum()
+        surface = df["surfcom2024"].sum() / 10000
+        
+        # Calcul des métriques normalisées
+        artif_par_1000hab = (total_artif / total_pop * 1000) if total_pop > 0 else 0
+        efficience = (df["naf09art24"].sum() / evolution_pop) if evolution_pop > 0 else 0
+        part_habitat = (df["art09hab24"].sum() / df["naf09art24"].sum() * 100) if df["naf09art24"].sum() > 0 else 0
+        part_activites = (df["art09act24"].sum() / df["naf09art24"].sum() * 100) if df["naf09art24"].sum() > 0 else 0
+        densite = (total_pop / surface) if surface > 0 else 0
+        
+        # Calcul enveloppe ZAN
+        cols_ref = ["naf11art12", "naf12art13", "naf13art14", "naf14art15", "naf15art16",
+                    "naf16art17", "naf17art18", "naf18art19", "naf19art20", "naf20art21"]
+        conso_ref = sum(df[col].sum() / 10000 for col in cols_ref if col in df.columns)
+        enveloppe = conso_ref * 0.5
+        
+        cols_recent = ["naf21art22", "naf22art23", "naf23art24"]
+        conso_recent = sum(df[col].sum() / 10000 for col in cols_recent if col in df.columns)
+        taux_zan = (conso_recent / enveloppe * 100) if enveloppe > 0 else 0
+        
+        return {
+            "name": name,
+            "Artif./1000 hab": artif_par_1000hab,
+            "Efficience (m²/hab)": efficience,
+            "Part Habitat (%)": part_habitat,
+            "Part Activités (%)": part_activites,
+            "Densité (hab/km²)": densite,
+            "Conso. enveloppe ZAN (%)": taux_zan,
+        }
+    
+    metrics_scot = calc_metrics(df_scot, "SCoT Rives du Rhône")
+    metrics_cc = calc_metrics(df_cc, "CC Porte de DrômArdèche")
+    
+    categories = ["Artif./1000 hab", "Efficience (m²/hab)", "Part Habitat (%)", 
+                  "Part Activités (%)", "Densité (hab/km²)", "Conso. enveloppe ZAN (%)"]
+    
+    # Normalisation pour le radar (0-100)
+    def normalize(val, min_val, max_val):
+        if max_val == min_val:
+            return 50
+        return (val - min_val) / (max_val - min_val) * 100
+    
+    values_scot = []
+    values_cc = []
+    
+    for cat in categories:
+        v_scot = metrics_scot[cat]
+        v_cc = metrics_cc[cat]
+        min_v = min(v_scot, v_cc) * 0.5
+        max_v = max(v_scot, v_cc) * 1.5
+        values_scot.append(normalize(v_scot, min_v, max_v))
+        values_cc.append(normalize(v_cc, min_v, max_v))
+    
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatterpolar(
+        r=values_scot + [values_scot[0]],
+        theta=categories + [categories[0]],
+        fill="toself",
+        fillcolor="rgba(46, 134, 171, 0.3)",
+        line=dict(color="#2E86AB", width=3),
+        name="SCoT Rives du Rhône",
+    ))
+    
+    fig.add_trace(go.Scatterpolar(
+        r=values_cc + [values_cc[0]],
+        theta=categories + [categories[0]],
+        fill="toself",
+        fillcolor="rgba(162, 59, 114, 0.3)",
+        line=dict(color="#A23B72", width=3),
+        name="CC Porte de DrômArdèche",
+    ))
+    
+    fig.update_layout(
+        title=dict(
+            text="BENCHMARK TERRITORIAL COMPARATIF",
+            font=dict(size=18, color="#FFFFFF", family="Segoe UI"),
+            x=0.5,
+        ),
+        polar=dict(
+            bgcolor="#0F172A",
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                tickfont=dict(color="#64748B", size=9),
+                gridcolor="#334155",
+            ),
+            angularaxis=dict(
+                tickfont=dict(color="#CBD5E0", size=10),
+                gridcolor="#334155",
+            ),
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.15,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=11, color="#CBD5E0"),
+        ),
+        template="plotly_dark",
+        height=500,
+        margin=dict(t=80, b=80, l=80, r=80),
+        paper_bgcolor="#1E293B",
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Tableau comparatif détaillé
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown(f"""
+<div style="background: rgba(46, 134, 171, 0.1); border: 1px solid #2E86AB; border-radius: 8px; padding: 1.25rem;">
+<div style="color: #2E86AB; font-weight: 700; font-size: 1rem; margin-bottom: 1rem; text-transform: uppercase;">SCoT RIVES DU RHÔNE</div>
+<table style="width: 100%; border-collapse: collapse;">
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Artif./1000 hab</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_scot['Artif./1000 hab']:.1f} ha</td>
+</tr>
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Efficience</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_scot['Efficience (m²/hab)']:.0f} m²/hab</td>
+</tr>
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Part Habitat</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_scot['Part Habitat (%)']:.0f}%</td>
+</tr>
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Part Activités</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_scot['Part Activités (%)']:.0f}%</td>
+</tr>
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Densité</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_scot['Densité (hab/km²)']:.0f} hab/km²</td>
+</tr>
+<tr>
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Conso. ZAN</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_scot['Conso. enveloppe ZAN (%)']:.0f}%</td>
+</tr>
+</table>
+</div>
+""", unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"""
+<div style="background: rgba(162, 59, 114, 0.1); border: 1px solid #A23B72; border-radius: 8px; padding: 1.25rem;">
+<div style="color: #A23B72; font-weight: 700; font-size: 1rem; margin-bottom: 1rem; text-transform: uppercase;">CC PORTE DE DRÔMARDÈCHE</div>
+<table style="width: 100%; border-collapse: collapse;">
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Artif./1000 hab</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_cc['Artif./1000 hab']:.1f} ha</td>
+</tr>
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Efficience</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_cc['Efficience (m²/hab)']:.0f} m²/hab</td>
+</tr>
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Part Habitat</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_cc['Part Habitat (%)']:.0f}%</td>
+</tr>
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Part Activités</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_cc['Part Activités (%)']:.0f}%</td>
+</tr>
+<tr style="border-bottom: 1px solid #334155;">
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Densité</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_cc['Densité (hab/km²)']:.0f} hab/km²</td>
+</tr>
+<tr>
+<td style="color: #94A3B8; padding: 0.5rem 0; font-size: 0.85rem;">Conso. ZAN</td>
+<td style="color: #FFFFFF; font-weight: 600; text-align: right; padding: 0.5rem 0;">{metrics_cc['Conso. enveloppe ZAN (%)']:.0f}%</td>
+</tr>
+</table>
+</div>
+""", unsafe_allow_html=True)
+
+
 def render_repartition_chart(metrics: dict):
     """
     Affiche le graphique de repartition par destination
