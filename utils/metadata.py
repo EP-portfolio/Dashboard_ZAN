@@ -76,3 +76,4 @@ def get_footer_text() -> str:
     )
 
 
+

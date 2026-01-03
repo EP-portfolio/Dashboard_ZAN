@@ -65,3 +65,4 @@ Le Dashboard sera accessible sur : **http://localhost:8501** (ou port suivant si
 - Tous les graphiques utilisent maintenant une syntaxe Plotly compatible
 
 
+

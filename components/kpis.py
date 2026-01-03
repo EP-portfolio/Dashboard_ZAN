@@ -9,9 +9,11 @@ import streamlit as st
 def render_kpis(metrics: dict):
     """
     Affiche les indicateurs clés de performance avec un design professionnel
+    Répartition sur 2 lignes pour une meilleure lisibilité
     """
     
-    col1, col2, col3, col4, col5 = st.columns(5)
+    # ===== LIGNE 1 : 3 KPIs principaux =====
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         _render_kpi_card(
@@ -41,6 +43,12 @@ def render_kpis(metrics: dict):
             sublabel="Par habitant ajouté",
             color="#A23B72"
         )
+    
+    # Espacement entre les lignes
+    st.markdown('<div style="margin-top: 1rem;"></div>', unsafe_allow_html=True)
+    
+    # ===== LIGNE 2 : 2 KPIs (centrés) =====
+    col_spacer1, col4, col5, col_spacer2 = st.columns([0.5, 1, 1, 0.5])
     
     with col4:
         _render_kpi_card(
@@ -74,20 +82,20 @@ def render_kpis(metrics: dict):
 
 
 def _render_kpi_card(label: str, value: str, unit: str, sublabel: str, color: str):
-    """Affiche une carte KPI professionnelle"""
+    """Affiche une carte KPI professionnelle avec meilleure lisibilité"""
     
-    unit_html = f'<span style="color: #94A3B8; font-size: 0.85rem; font-weight: 500; margin-left: 0.25rem;">{unit}</span>' if unit else ''
+    unit_html = f'<span style="color: #CBD5E0; font-size: 1rem; font-weight: 500; margin-left: 0.35rem;">{unit}</span>' if unit else ''
     
     html = f'''
-<div style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border: 1px solid #334155; border-left: 4px solid {color}; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); min-height: 140px; transition: all 0.3s ease;">
+<div style="background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border: 1px solid #334155; border-left: 5px solid {color}; border-radius: 10px; padding: 1.5rem 1.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.4); min-height: 150px; transition: all 0.3s ease;">
 <div style="margin-bottom: 1rem;">
-<div style="color: #94A3B8; font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 0.5rem;">{label}</div>
-<div style="color: #FFFFFF; font-size: 1.75rem; font-weight: 700; line-height: 1.2; font-family: 'Segoe UI', Arial, sans-serif; display: flex; align-items: baseline;">
+<div style="color: #CBD5E0; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 0.75rem; line-height: 1.3;">{label}</div>
+<div style="color: #FFFFFF; font-size: 2.25rem; font-weight: 800; line-height: 1.1; font-family: 'Segoe UI', Arial, sans-serif; display: flex; align-items: baseline; flex-wrap: wrap;">
 {value}{unit_html}
 </div>
 </div>
-<div style="border-top: 1px solid #334155; padding-top: 0.75rem;">
-<div style="color: #64748B; font-size: 0.8rem; font-weight: 400; line-height: 1.4;">{sublabel}</div>
+<div style="border-top: 1px solid #475569; padding-top: 0.85rem; margin-top: 0.5rem;">
+<div style="color: #94A3B8; font-size: 0.9rem; font-weight: 400; line-height: 1.4;">{sublabel}</div>
 </div>
 </div>
 '''

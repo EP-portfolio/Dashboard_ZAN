@@ -172,3 +172,4 @@ Pour mettre à jour l'application après des modifications :
 **Prochaine étape** : Connecter le dépôt à Streamlit Cloud et déployer ! 🚀
 
 
+
