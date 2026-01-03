@@ -129,26 +129,12 @@ def render_evolution_chart(df: pd.DataFrame):
         showarrow=False,
         font=dict(size=11, color="#CBD5E0"),
         align="left",
-        bgcolor="rgba(15, 23, 42, 0.9)",
-        bordercolor="#334155",
-        borderwidth=1,
-    )
-    
-    # Ajout de la mention de source
-    fig.add_annotation(
-        x=0.98, y=0.02,
-        xref="paper", yref="paper",
-        text=get_data_source_text(),
-        showarrow=False,
-        font=dict(size=9, color="#64748B"),
-        align="right",
-        bgcolor="rgba(15, 23, 42, 0.9)",
-        bordercolor="#334155",
-        borderwidth=1,
-        borderpad=4,
     )
     
     st.plotly_chart(fig, use_container_width=True)
+    
+    # Source en texte sous le graphique
+    st.markdown(f'<div style="text-align: right; color: #64748B; font-size: 0.7rem; margin-top: -0.5rem;">{get_data_source_text()}</div>', unsafe_allow_html=True)
 
 
 # ============================================
@@ -290,9 +276,6 @@ def render_efficience_chart(df: pd.DataFrame):
         showarrow=False,
         font=dict(size=10, color="#94A3B8"),
         align="left",
-        bgcolor="rgba(15, 23, 42, 0.8)",
-        bordercolor="#334155",
-        borderwidth=1,
     )
     
     # Source
@@ -727,7 +710,6 @@ def render_jauge_zan_communes(df: pd.DataFrame):
             showarrow=False,
             font=dict(size=9, color="#94A3B8"),
             align="right",
-            bgcolor="rgba(15, 23, 42, 0.8)",
         )
         
         st.plotly_chart(fig, use_container_width=True)
@@ -1207,21 +1189,10 @@ def render_repartition_chart(metrics: dict):
         )],
     )
     
-    # Ajout de la mention de source
-    fig.add_annotation(
-        x=0.98, y=0.02,
-        xref="paper", yref="paper",
-        text=get_data_source_text(),
-        showarrow=False,
-        font=dict(size=9, color="#64748B"),
-        align="right",
-        bgcolor="rgba(15, 23, 42, 0.9)",
-        bordercolor="#334155",
-        borderwidth=1,
-        borderpad=4,
-    )
-    
     st.plotly_chart(fig, use_container_width=True)
+    
+    # Source en texte sous le graphique
+    st.markdown(f'<div style="text-align: right; color: #64748B; font-size: 0.7rem; margin-top: -0.5rem;">{get_data_source_text()}</div>', unsafe_allow_html=True)
     
     # Tableau détaillé sous le graphique
     st.markdown("""
@@ -1290,6 +1261,19 @@ def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
                     ),
                 )
             )
+        
+        # Ajouter les valeurs totales au bout de chaque barre
+        for i, row in df_plot.iterrows():
+            total_val = row["artif_total_ha"]
+            fig.add_annotation(
+                x=total_val,
+                y=row["idcomtxt"],
+                text=f"<b>{total_val:.1f} ha</b>",
+                showarrow=False,
+                xanchor="left",
+                xshift=8,
+                font=dict(size=11, color="#FFFFFF", family="Segoe UI"),
+            )
     else:
         # Fallback: barre simple si pas de données par destination
         fig.add_trace(
@@ -1312,18 +1296,19 @@ def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
             )
         )
     
+    # Calculer le max pour ajuster la marge droite (espace pour les labels)
+    max_val = df_plot["artif_total_ha"].max()
+    
     fig.update_layout(
         title=dict(
-            text=f"TOP {n_top} COMMUNES - ARTIFICIALISATION PAR DESTINATION",
-            font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
+            text=f"TOP {n_top} COMMUNES<br><span style='font-size:12px;color:#94A3B8'>Artificialisation par destination (2009-2024)</span>",
+            font=dict(size=18, color="#FFFFFF", family="Segoe UI"),
             x=0.5,
+            y=0.95,
         ),
         xaxis=dict(
-            title="Hectares artificialisés (2009-2024)",
-            tickfont=dict(size=12, color="#CBD5E0"),
-            gridcolor="#334155",
-            gridwidth=1,
-            showgrid=True,
+            visible=False,  # Retirer l'axe des abscisses
+            range=[0, max_val * 1.25],  # Espace pour les labels
         ),
         yaxis=dict(
             title="",
@@ -1332,33 +1317,19 @@ def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
         ),
         barmode="stack",
         template="plotly_dark",
-        height=450,
+        height=480,
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=-0.12,
+            y=-0.08,
             xanchor="center",
             x=0.5,
             font=dict(size=12, color="#CBD5E0"),
             bgcolor="rgba(0,0,0,0)",
         ),
-        margin=dict(t=60, b=60, l=150, r=40),
+        margin=dict(t=80, b=50, l=160, r=80),
         plot_bgcolor="#0F172A",
         paper_bgcolor="#1E293B",
-    )
-    
-    # Ajout de la mention de source
-    fig.add_annotation(
-        x=0.98, y=0.02,
-        xref="paper", yref="paper",
-        text=get_data_source_text(),
-        showarrow=False,
-        font=dict(size=9, color="#64748B"),
-        align="right",
-        bgcolor="rgba(15, 23, 42, 0.9)",
-        bordercolor="#334155",
-        borderwidth=1,
-        borderpad=4,
     )
     
     st.plotly_chart(fig, use_container_width=True)
@@ -1728,18 +1699,7 @@ def render_trajectory_chart(df: pd.DataFrame, metrics: dict):
         margin=dict(t=60, b=80, l=60, r=40),
     )
     
-    # Ajout de la mention de source
-    fig.add_annotation(
-        x=0.98, y=0.02,
-        xref="paper", yref="paper",
-        text=get_data_source_text(),
-        showarrow=False,
-        font=dict(size=9, color="#718096"),
-        align="right",
-        bgcolor="rgba(255,255,255,0.9)",
-        bordercolor="#E2E8F0",
-        borderwidth=1,
-        borderpad=4,
-    )
-    
     st.plotly_chart(fig, use_container_width=True)
+    
+    # Source en texte sous le graphique
+    st.markdown(f'<div style="text-align: right; color: #64748B; font-size: 0.7rem; margin-top: -0.5rem;">{get_data_source_text()}</div>', unsafe_allow_html=True)
