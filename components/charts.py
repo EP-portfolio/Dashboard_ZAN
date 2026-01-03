@@ -73,11 +73,12 @@ def render_evolution_chart(df: pd.DataFrame):
             x=df_evolution["Annee"],
             y=df_evolution["Consommation"],
             marker=dict(color=colors_list),
-            text=df_evolution["Consommation"].apply(lambda x: f"{x:.1f}"),
+            text=df_evolution["Consommation"].apply(lambda x: f"<b>{x:.1f}</b>"),
             textposition="outside",
-            textfont=dict(size=11, color="#FAFAFA", family="Arial"),
+            textfont=dict(size=12, color="#FFFFFF", family="Segoe UI"),
             hovertemplate="<b>Annee %{x}</b><br>Consommation: %{y:.2f} ha<extra></extra>",
             name="Consommation annuelle",
+            cliponaxis=False,
         )
     )
     
@@ -95,41 +96,41 @@ def render_evolution_chart(df: pd.DataFrame):
     # Mise en forme
     fig.update_layout(
         title=dict(
-            text="Evolution de la consommation d'espaces NAF (ha/an)",
-            font=dict(size=18, color="#1E3A5F"),
+            text="ÉVOLUTION DE LA CONSOMMATION D'ESPACES NAF",
+            font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
             x=0.5,
         ),
         xaxis=dict(
-            title="Annee",
-            tickfont=dict(size=12, color="#FAFAFA"),
+            title="Année",
+            tickfont=dict(size=12, color="#CBD5E0"),
             tickangle=0,
             showgrid=False,
         ),
         yaxis=dict(
             title="Hectares",
-            tickfont=dict(size=12, color="#FAFAFA"),
-            gridcolor="#E2E8F0",
+            tickfont=dict(size=12, color="#CBD5E0"),
+            gridcolor="#334155",
             gridwidth=1,
-            range=[0, max(df_evolution["Consommation"].max() * 1.3, moyenne * 1.1)],
+            range=[0, df_evolution["Consommation"].max() * 1.35],
         ),
         template="plotly_dark",
         height=500,
         showlegend=False,
-        margin=dict(t=80, b=60, l=80, r=40),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+        margin=dict(t=100, b=60, l=80, r=40),
+        plot_bgcolor="#0F172A",
+        paper_bgcolor="#1E293B",
     )
     
     # Legende personnalisee
     fig.add_annotation(
         x=0.02, y=0.98,
         xref="paper", yref="paper",
-        text="<b>Bleu</b>: Periode reference (2010-2021) | <b>Rose</b>: Periode ZAN (2022-2024)",
+        text="<b>Bleu</b>: Période référence (2010-2021) | <b>Rose</b>: Période ZAN (2022-2024)",
         showarrow=False,
-        font=dict(size=11, color="#718096"),
+        font=dict(size=11, color="#CBD5E0"),
         align="left",
-        bgcolor="rgba(255,255,255,0.8)",
-        bordercolor="#E2E8F0",
+        bgcolor="rgba(15, 23, 42, 0.9)",
+        bordercolor="#334155",
         borderwidth=1,
     )
     
@@ -139,24 +140,10 @@ def render_evolution_chart(df: pd.DataFrame):
         xref="paper", yref="paper",
         text=get_data_source_text(),
         showarrow=False,
-        font=dict(size=9, color="#718096"),
+        font=dict(size=9, color="#64748B"),
         align="right",
-        bgcolor="rgba(255,255,255,0.9)",
-        bordercolor="#E2E8F0",
-        borderwidth=1,
-        borderpad=4,
-    )
-    
-    # Ajout de la mention de source
-    fig.add_annotation(
-        x=0.98, y=0.02,
-        xref="paper", yref="paper",
-        text=get_data_source_text(),
-        showarrow=False,
-        font=dict(size=9, color="#718096"),
-        align="right",
-        bgcolor="rgba(255,255,255,0.9)",
-        bordercolor="#E2E8F0",
+        bgcolor="rgba(15, 23, 42, 0.9)",
+        bordercolor="#334155",
         borderwidth=1,
         borderpad=4,
     )
@@ -1169,29 +1156,33 @@ def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        # Graphique barres horizontales - AMELIORE
+        # Graphique barres horizontales - VERSION AVEC NOM SUR LES BARRES
         df_plot = df_top.sort_values("artif_total_ha", ascending=True)
         
         fig = go.Figure()
         
         # Gradient de couleurs pour meilleure lisibilite
         n = len(df_plot)
-        colors = [f"rgba(46, 134, 171, {0.5 + 0.5 * i / n})" for i in range(n)]
+        colors = [f"rgba(46, 134, 171, {0.6 + 0.4 * i / n})" for i in range(n)]
+        
+        # Texte sur la barre : nom de la commune + valeur
+        texts = [f"<b>{nom}</b>  ({val:.1f} ha)" for nom, val in zip(df_plot["idcomtxt"], df_plot["artif_total_ha"])]
         
         fig.add_trace(
             go.Bar(
-                y=df_plot["idcomtxt"],
+                y=list(range(len(df_plot))),
                 x=df_plot["artif_total_ha"],
                 orientation="h",
                 marker=dict(
                     color=colors,
-                    line=dict(color="#1E3A5F", width=1.5),
+                    line=dict(color="#1E293B", width=1),
                 ),
-                text=df_plot["artif_total_ha"].apply(lambda x: f"{x:.1f} ha"),
-                textposition="outside",
-                textfont=dict(size=12, color="#1A202C"),
+                text=texts,
+                textposition="inside",
+                insidetextanchor="start",
+                textfont=dict(size=12, color="#FFFFFF", family="Segoe UI"),
                 hovertemplate=(
-                    "<b>%{y}</b><br>"
+                    "<b>%{text}</b><br>"
                     "Artificialisation: %{x:.2f} ha<br>"
                     "<extra></extra>"
                 ),
@@ -1200,28 +1191,28 @@ def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
         
         fig.update_layout(
             title=dict(
-                text=f"Top {n_top} communes les plus artificialisees",
-                font=dict(size=18, color="#1E3A5F"),
+                text=f"TOP {n_top} COMMUNES LES PLUS ARTIFICIALISÉES",
+                font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
                 x=0.5,
             ),
             xaxis=dict(
-                title="Hectares artificialises (2009-2024)",
-                tickfont=dict(size=12, color="#FAFAFA"),
-                gridcolor="#E2E8F0",
+                title="Hectares artificialisés (2009-2024)",
+                tickfont=dict(size=11, color="#CBD5E0"),
+                gridcolor="#334155",
                 gridwidth=1,
                 showgrid=True,
             ),
             yaxis=dict(
                 title="",
-                tickfont=dict(size=12, color="#FAFAFA"),
+                showticklabels=False,
                 showgrid=False,
             ),
             template="plotly_dark",
             height=500,
             showlegend=False,
-            margin=dict(t=80, b=40, l=180, r=100),
-            plot_bgcolor="white",
-            paper_bgcolor="white",
+            margin=dict(t=80, b=60, l=20, r=40),
+            plot_bgcolor="#0F172A",
+            paper_bgcolor="#1E293B",
         )
         
         # Ajout de la mention de source
