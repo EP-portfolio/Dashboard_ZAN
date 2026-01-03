@@ -478,10 +478,16 @@ def render_typologie_chart(df: pd.DataFrame):
     
     st.plotly_chart(fig2, use_container_width=True)
     
-    # ===== TABLEAU RÉCAPITULATIF =====
-    st.markdown("""
+    # ===== TABLEAU RÉCAPITULATIF AVEC OBJECTIF ZAN =====
+    # Objectif ZAN : 200 m²/hab ajouté (seuil de conformité loi Climat)
+    OBJECTIF_ZAN_M2_HAB = 200
+    
+    st.markdown(f"""
 <div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-top: 1rem;">
-<div style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px;">SYNTHÈSE PAR TYPOLOGIE</div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #334155;">
+<div style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">SYNTHÈSE PAR TYPOLOGIE</div>
+<div style="color: #94A3B8; font-size: 0.75rem;">Objectif ZAN : <span style="color: #48BB78; font-weight: 600;">{OBJECTIF_ZAN_M2_HAB} m²/hab</span></div>
+</div>
 """, unsafe_allow_html=True)
     
     for _, row in agg_data.iterrows():
@@ -489,20 +495,74 @@ def render_typologie_chart(df: pd.DataFrame):
         typo_full = row["typo_full"]
         artif = row["naf09art24"]
         eff = row["efficience"]
+        pop_evol = row["pop1521"]
         
-        # Couleur selon efficience
-        if eff < 200:
-            eff_color = "#48BB78"
-        elif eff < 500:
-            eff_color = "#ED8936"
+        # Statut de conformité ZAN
+        is_conforme = eff <= OBJECTIF_ZAN_M2_HAB
+        
+        # Calcul de l'écart avec l'objectif
+        if pop_evol > 0:
+            # m² consommés réellement
+            m2_consommes = artif * 10000
+            # m² qui auraient dû être consommés pour être conforme
+            m2_objectif = pop_evol * OBJECTIF_ZAN_M2_HAB
+            # Écart en m²/hab
+            ecart = eff - OBJECTIF_ZAN_M2_HAB
         else:
-            eff_color = "#F56565"
+            ecart = 0
+        
+        # Couleurs selon conformité
+        if is_conforme:
+            bg_color = "rgba(72, 187, 120, 0.15)"  # Vert transparent
+            border_color = "#48BB78"
+            status_icon = "✓"
+            status_text = "CONFORME"
+            status_color = "#48BB78"
+            ecart_text = f"+{abs(ecart):.0f} m²/hab de marge" if ecart < 0 else "À l'objectif"
+        else:
+            if eff < 500:
+                bg_color = "rgba(237, 137, 54, 0.15)"  # Orange transparent
+                border_color = "#ED8936"
+                status_icon = "⚠"
+                status_text = "VIGILANCE"
+                status_color = "#ED8936"
+            else:
+                bg_color = "rgba(245, 101, 101, 0.15)"  # Rouge transparent
+                border_color = "#F56565"
+                status_icon = "✗"
+                status_text = "DÉPASSEMENT"
+                status_color = "#F56565"
+            ecart_text = f"-{ecart:.0f} m²/hab à réduire"
         
         st.markdown(f"""
-<div style="display: flex; align-items: center; padding: 0.75rem; background: #0F172A; border-radius: 6px; margin-bottom: 0.5rem; border-left: 4px solid {typo_colors.get(typo, '#64748B')};">
-<div style="flex: 1; color: #FFFFFF; font-weight: 600;">{typo_full}</div>
-<div style="color: #94A3B8; font-size: 0.85rem; margin-right: 1rem;">{artif:.0f} ha</div>
-<div style="background: {eff_color}; color: #0F172A; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">{eff:.0f} m²/hab</div>
+<div style="display: flex; align-items: center; padding: 0.85rem 1rem; background: {bg_color}; border-radius: 8px; margin-bottom: 0.5rem; border-left: 5px solid {border_color};">
+<div style="flex: 1.5;">
+<div style="color: #FFFFFF; font-weight: 600; font-size: 0.95rem;">{typo_full}</div>
+<div style="color: #94A3B8; font-size: 0.75rem; margin-top: 0.25rem;">{artif:.0f} ha consommés</div>
+</div>
+<div style="flex: 1; text-align: center;">
+<div style="color: #FFFFFF; font-size: 1.1rem; font-weight: 700;">{eff:.0f} <span style="font-size: 0.7rem; color: #94A3B8;">m²/hab</span></div>
+<div style="color: #64748B; font-size: 0.7rem;">actuel</div>
+</div>
+<div style="flex: 1; text-align: center;">
+<div style="color: #48BB78; font-size: 1.1rem; font-weight: 700;">{OBJECTIF_ZAN_M2_HAB} <span style="font-size: 0.7rem; color: #94A3B8;">m²/hab</span></div>
+<div style="color: #64748B; font-size: 0.7rem;">objectif</div>
+</div>
+<div style="flex: 1.2; text-align: right;">
+<div style="display: inline-flex; align-items: center; gap: 0.35rem; background: {border_color}; color: #0F172A; padding: 0.35rem 0.65rem; border-radius: 5px; font-size: 0.75rem; font-weight: 700;">
+<span>{status_icon}</span><span>{status_text}</span>
+</div>
+<div style="color: {status_color}; font-size: 0.7rem; margin-top: 0.3rem; font-weight: 500;">{ecart_text}</div>
+</div>
+</div>
+""", unsafe_allow_html=True)
+    
+    # Légende
+    st.markdown("""
+<div style="display: flex; gap: 1.5rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #334155; justify-content: center;">
+<div style="display: flex; align-items: center; gap: 0.4rem;"><div style="width: 12px; height: 12px; background: #48BB78; border-radius: 3px;"></div><span style="color: #94A3B8; font-size: 0.75rem;">Conforme (≤200 m²/hab)</span></div>
+<div style="display: flex; align-items: center; gap: 0.4rem;"><div style="width: 12px; height: 12px; background: #ED8936; border-radius: 3px;"></div><span style="color: #94A3B8; font-size: 0.75rem;">Vigilance (200-500 m²/hab)</span></div>
+<div style="display: flex; align-items: center; gap: 0.4rem;"><div style="width: 12px; height: 12px; background: #F56565; border-radius: 3px;"></div><span style="color: #94A3B8; font-size: 0.75rem;">Dépassement (>500 m²/hab)</span></div>
 </div>
 """, unsafe_allow_html=True)
     
