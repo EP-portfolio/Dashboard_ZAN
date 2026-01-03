@@ -373,105 +373,110 @@ def render_typologie_chart(df: pd.DataFrame):
 </div>
 """, unsafe_allow_html=True)
     
-    col1, col2 = st.columns([1.5, 1])
+    # ===== HISTOGRAMME GROUPÉ =====
+    st.markdown("""
+<div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 0.75rem; margin-bottom: 1rem;">
+<div style="color: #94A3B8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Consommation par destination et type de territoire</div>
+</div>
+""", unsafe_allow_html=True)
     
-    with col1:
-        # Barres groupées par destination
-        destinations = ["Habitat", "Activités", "Mixte", "Routes"]
-        dest_cols = ["art09hab24", "art09act24", "art09mix24", "art09rou24"]
-        dest_colors = ["#48BB78", "#ED8936", "#2E86AB", "#64748B"]
-        
-        fig = go.Figure()
-        
-        for dest, col_name, color in zip(destinations, dest_cols, dest_colors):
-            fig.add_trace(
-                go.Bar(
-                    name=dest,
-                    x=agg_data["typo_label"],
-                    y=agg_data[col_name],
-                    marker_color=color,
-                    text=agg_data[col_name].apply(lambda x: f"{x:.0f}" if x >= 5 else ""),
-                    textposition="inside",
-                    textfont=dict(size=9, color="#FFFFFF"),
-                    hovertemplate="<b>%{x}</b><br>" + dest + ": %{y:.1f} ha<extra></extra>",
-                )
+    # Barres groupées par destination
+    destinations = ["Habitat", "Activités", "Mixte", "Routes"]
+    dest_cols = ["art09hab24", "art09act24", "art09mix24", "art09rou24"]
+    dest_colors = ["#48BB78", "#ED8936", "#2E86AB", "#64748B"]
+    
+    fig = go.Figure()
+    
+    for dest, col_name, color in zip(destinations, dest_cols, dest_colors):
+        fig.add_trace(
+            go.Bar(
+                name=dest,
+                x=agg_data["typo_label"],
+                y=agg_data[col_name],
+                marker_color=color,
+                text=agg_data[col_name].apply(lambda x: f"{x:.0f}" if x >= 1 else ""),
+                textposition="outside",
+                textfont=dict(size=10, color="#FFFFFF"),
+                hovertemplate="<b>%{x}</b><br>" + dest + ": %{y:.1f} ha<extra></extra>",
             )
-        
-        fig.update_layout(
-            xaxis=dict(
-                title="",
-                tickfont=dict(size=12, color="#FFFFFF"),
-                tickangle=0,
-            ),
-            yaxis=dict(
-                title="Hectares",
-                tickfont=dict(size=11, color="#94A3B8"),
-                gridcolor="#334155",
-            ),
-            barmode="group",
-            template="plotly_dark",
-            height=350,
-            legend=dict(
-                orientation="h",
-                yanchor="top",
-                y=1.15,
-                xanchor="center",
-                x=0.5,
-                font=dict(size=11, color="#CBD5E0"),
-                bgcolor="rgba(0,0,0,0)",
-            ),
-            margin=dict(t=50, b=40, l=60, r=20),
-            paper_bgcolor="#1E293B",
-            plot_bgcolor="#0F172A",
-            bargap=0.15,
-            bargroupgap=0.1,
         )
-        
-        st.plotly_chart(fig, use_container_width=True)
     
-    with col2:
-        # Donut répartition globale avec légende
-        labels = agg_data["typo_full"].tolist()
-        labels_short = agg_data["typo_label"].tolist()
-        values = agg_data["naf09art24"].tolist()
-        colors = [typo_colors.get(l, "#64748B") for l in labels_short]
-        
-        fig2 = go.Figure(data=[go.Pie(
-            labels=labels,
-            values=values,
-            hole=0.5,
-            marker=dict(colors=colors, line=dict(color="#1E293B", width=2)),
-            textinfo="percent",
-            textposition="outside",
-            textfont=dict(size=11, color="#FFFFFF"),
-            hovertemplate="<b>%{label}</b><br>%{value:.1f} ha (%{percent})<extra></extra>",
-            pull=[0.02] * len(labels),
-        )])
-        
-        total = sum(values)
-        fig2.update_layout(
-            showlegend=True,
-            legend=dict(
-                orientation="v",
-                yanchor="middle",
-                y=0.5,
-                xanchor="left",
-                x=1.02,
-                font=dict(size=10, color="#CBD5E0"),
-                bgcolor="rgba(0,0,0,0)",
-            ),
-            height=350,
-            margin=dict(t=20, b=20, l=20, r=120),
-            paper_bgcolor="#1E293B",
-            annotations=[dict(
-                text=f"<b>{total:.0f}</b><br><span style='font-size:12px'>ha</span>",
-                x=0.5, y=0.5,
-                font=dict(size=20, color="#FFFFFF"),
-                showarrow=False,
-            )],
-        )
-        
-        st.plotly_chart(fig2, use_container_width=True)
+    # Calculer le max pour ajuster l'axe Y
+    max_val = max(agg_data[col].max() for col in dest_cols)
+    
+    fig.update_layout(
+        xaxis=dict(
+            title="",
+            tickfont=dict(size=12, color="#FFFFFF"),
+            tickangle=0,
+        ),
+        yaxis=dict(
+            title="Hectares",
+            tickfont=dict(size=11, color="#94A3B8"),
+            gridcolor="#334155",
+            range=[0, max_val * 1.2],  # Espace pour les labels
+        ),
+        barmode="group",
+        template="plotly_dark",
+        height=380,
+        legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=1.12,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=11, color="#CBD5E0"),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        margin=dict(t=60, b=40, l=60, r=20),
+        paper_bgcolor="#1E293B",
+        plot_bgcolor="#0F172A",
+        bargap=0.2,
+        bargroupgap=0.1,
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # ===== DIAGRAMME CIRCULAIRE - PLEINE LARGEUR =====
+    st.markdown("""
+<div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 0.75rem; margin-top: 1rem; margin-bottom: 1rem;">
+<div style="color: #94A3B8; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Répartition globale par typologie territoriale</div>
+</div>
+""", unsafe_allow_html=True)
+    
+    # Donut répartition globale avec légende - pleine largeur
+    labels = agg_data["typo_full"].tolist()
+    labels_short = agg_data["typo_label"].tolist()
+    values = agg_data["naf09art24"].tolist()
+    colors = [typo_colors.get(l, "#64748B") for l in labels_short]
+    
+    fig2 = go.Figure(data=[go.Pie(
+        labels=labels,
+        values=values,
+        hole=0.45,
+        marker=dict(colors=colors, line=dict(color="#1E293B", width=2)),
+        textinfo="percent+label",
+        textposition="outside",
+        textfont=dict(size=12, color="#FFFFFF"),
+        hovertemplate="<b>%{label}</b><br>%{value:.1f} ha (%{percent})<extra></extra>",
+        pull=[0.02] * len(labels),
+    )])
+    
+    total = sum(values)
+    fig2.update_layout(
+        showlegend=False,  # Légende désactivée car labels affichés sur le graphique
+        height=400,
+        margin=dict(t=60, b=60, l=100, r=100),
+        paper_bgcolor="#1E293B",
+        annotations=[dict(
+            text=f"<b>{total:.0f}</b><br><span style='font-size:14px'>ha total</span>",
+            x=0.5, y=0.5,
+            font=dict(size=24, color="#FFFFFF"),
+            showarrow=False,
+        )],
+    )
+    
+    st.plotly_chart(fig2, use_container_width=True)
     
     # ===== TABLEAU RÉCAPITULATIF =====
     st.markdown("""
