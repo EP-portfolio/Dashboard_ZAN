@@ -1119,32 +1119,18 @@ def render_repartition_chart(metrics: dict):
     
     st.plotly_chart(fig, use_container_width=True)
     
-    with col2:
-        st.markdown("""
-<div style="background: #1E2229; border: 1px solid #2D3748; border-radius: 10px; padding: 1rem; margin-top: 2rem;">
-<div style="color: #FAFAFA; font-weight: 700; font-size: 0.95rem; margin-bottom: 1rem;">Detail par destination</div>
+    # Tableau détaillé sous le graphique
+    st.markdown("""
+<div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+<div style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.75rem; text-transform: uppercase;">Detail par destination</div>
 """, unsafe_allow_html=True)
-        
-        for cat, val, col in data_rep:
-            if val > 0.1:
-                pct = (val / total * 100) if total > 0 else 0
-                st.markdown(f"""
-<div style="display: flex; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #E2E8F0;">
-<div style="width: 12px; height: 12px; background: {col}; border-radius: 3px; margin-right: 0.75rem;"></div>
-<div style="flex: 1; color: #CBD5E0; font-size: 0.9rem;">{cat}</div>
-<div style="color: #FAFAFA; font-weight: 600; font-size: 0.9rem;">{val:.1f} ha</div>
-<div style="color: #A0AEC0; font-size: 0.85rem; margin-left: 0.5rem; width: 50px; text-align: right;">({pct:.1f}%)</div>
-</div>
-""", unsafe_allow_html=True)
-        
-        st.markdown(f"""
-<div style="display: flex; align-items: center; padding: 0.75rem 0; margin-top: 0.5rem; background: #262730; border-radius: 6px; padding-left: 0.75rem;">
-<div style="flex: 1; color: #FAFAFA; font-weight: 700; font-size: 0.95rem;">TOTAL</div>
-<div style="color: #FAFAFA; font-weight: 800; font-size: 1.1rem;">{total:.1f} ha</div>
-<div style="width: 60px;"></div>
-</div>
-</div>
-""", unsafe_allow_html=True)
+    
+    for cat, val, color in data_rep:
+        if val > 0.1:
+            pct = (val / total * 100) if total > 0 else 0
+            st.markdown(f'<div style="display: flex; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #334155;"><div style="width: 12px; height: 12px; background: {color}; border-radius: 3px; margin-right: 0.75rem;"></div><div style="flex: 1; color: #CBD5E0; font-size: 0.9rem;">{cat}</div><div style="color: #FFFFFF; font-weight: 600; font-size: 0.9rem;">{val:.1f} ha</div><div style="color: #94A3B8; font-size: 0.85rem; margin-left: 0.5rem; width: 55px; text-align: right;">({pct:.1f}%)</div></div>', unsafe_allow_html=True)
+    
+    st.markdown(f'<div style="display: flex; align-items: center; padding: 0.6rem 0; margin-top: 0.5rem; background: #0F172A; border-radius: 6px; padding-left: 0.75rem; padding-right: 0.75rem;"><div style="flex: 1; color: #FFFFFF; font-weight: 700; font-size: 0.95rem;">TOTAL</div><div style="color: #48BB78; font-weight: 800; font-size: 1.1rem;">{total:.1f} ha</div></div></div>', unsafe_allow_html=True)
 
 
 def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
