@@ -478,91 +478,135 @@ def render_typologie_chart(df: pd.DataFrame):
     
     st.plotly_chart(fig2, use_container_width=True)
     
-    # ===== TABLEAU RÉCAPITULATIF AVEC OBJECTIF ZAN =====
-    # Objectif ZAN : 200 m²/hab ajouté (seuil de conformité loi Climat)
-    OBJECTIF_ZAN_M2_HAB = 200
+    # ===== TABLEAU RÉCAPITULATIF AVEC VRAI CALCUL ZAN =====
+    # Logique ZAN : -50% sur 2021-2031 vs 2011-2021
+    # Après 3 ans (2021-2024), le seuil théorique = 30% de l'enveloppe
+    # Enveloppe = consommation 2011-2021 × 0.5
     
-    st.markdown(f"""
+    # Calculer les données ZAN par typologie
+    # Colonnes période de référence (2011-2021)
+    cols_ref = ["naf11art12", "naf12art13", "naf13art14", "naf14art15", "naf15art16",
+                "naf16art17", "naf17art18", "naf18art19", "naf19art20", "naf20art21"]
+    # Colonnes période récente (2021-2024)
+    cols_recent = ["naf21art22", "naf22art23", "naf23art24"]
+    
+    # Agréger par typologie pour calcul ZAN
+    df_zan = df.copy()
+    df_zan["typo_label"] = df_zan["aav2020_typo"].astype(str).map(typo_labels).fillna("Autre")
+    
+    # Calcul consommation référence et récente par typologie
+    zan_data = []
+    for typo in agg_data["typo_label"].unique():
+        df_typo = df_zan[df_zan["typo_label"] == typo]
+        
+        # Conso référence 2011-2021 (en ha)
+        conso_ref = sum(df_typo[col].sum() / 10000 for col in cols_ref if col in df_typo.columns)
+        # Enveloppe ZAN = 50% de la référence
+        enveloppe = conso_ref * 0.5
+        # Conso récente 2021-2024 (en ha)
+        conso_recent = sum(df_typo[col].sum() / 10000 for col in cols_recent if col in df_typo.columns)
+        # Taux de consommation de l'enveloppe
+        taux_enveloppe = (conso_recent / enveloppe * 100) if enveloppe > 0 else 0
+        # Reste disponible
+        reste = max(0, enveloppe - conso_recent)
+        
+        zan_data.append({
+            "typo_label": typo,
+            "conso_ref": conso_ref,
+            "enveloppe": enveloppe,
+            "conso_recent": conso_recent,
+            "taux": taux_enveloppe,
+            "reste": reste,
+        })
+    
+    zan_df = pd.DataFrame(zan_data)
+    
+    # Fusionner avec agg_data
+    agg_data = agg_data.merge(zan_df, on="typo_label", how="left")
+    
+    st.markdown("""
 <div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-top: 1rem;">
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #334155;">
-<div style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">SYNTHÈSE PAR TYPOLOGIE</div>
-<div style="color: #94A3B8; font-size: 0.75rem;">Objectif ZAN : <span style="color: #48BB78; font-weight: 600;">{OBJECTIF_ZAN_M2_HAB} m²/hab</span></div>
+<div style="color: #FFFFFF; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">CONFORMITÉ ZAN PAR TYPOLOGIE</div>
+<div style="color: #94A3B8; font-size: 0.75rem;">Objectif : <span style="color: #48BB78; font-weight: 600;">-50% sur 2021-2031</span> vs 2011-2021</div>
 </div>
 """, unsafe_allow_html=True)
+    
+    # Seuil théorique après 3 ans (30% de l'enveloppe)
+    SEUIL_3ANS = 30  # %
     
     for _, row in agg_data.iterrows():
         typo = row["typo_label"]
         typo_full = row["typo_full"]
-        artif = row["naf09art24"]
+        artif_total = row["naf09art24"]
         eff = row["efficience"]
-        pop_evol = row["pop1521"]
         
-        # Statut de conformité ZAN
-        is_conforme = eff <= OBJECTIF_ZAN_M2_HAB
+        enveloppe = row.get("enveloppe", 0)
+        conso_recent = row.get("conso_recent", 0)
+        taux = row.get("taux", 0)
+        reste = row.get("reste", 0)
         
-        # Calcul de l'écart avec l'objectif
-        if pop_evol > 0:
-            # m² consommés réellement
-            m2_consommes = artif * 10000
-            # m² qui auraient dû être consommés pour être conforme
-            m2_objectif = pop_evol * OBJECTIF_ZAN_M2_HAB
-            # Écart en m²/hab
-            ecart = eff - OBJECTIF_ZAN_M2_HAB
-        else:
-            ecart = 0
-        
-        # Couleurs selon conformité
-        if is_conforme:
-            bg_color = "rgba(72, 187, 120, 0.15)"  # Vert transparent
+        # Conformité : après 3 ans, on devrait être à max 30% de l'enveloppe
+        if taux <= SEUIL_3ANS:
+            bg_color = "rgba(72, 187, 120, 0.15)"
             border_color = "#48BB78"
             status_icon = "✓"
             status_text = "CONFORME"
             status_color = "#48BB78"
-            ecart_text = f"+{abs(ecart):.0f} m²/hab de marge" if ecart < 0 else "À l'objectif"
+        elif taux <= 50:
+            bg_color = "rgba(237, 137, 54, 0.15)"
+            border_color = "#ED8936"
+            status_icon = "⚠"
+            status_text = "VIGILANCE"
+            status_color = "#ED8936"
         else:
-            if eff < 500:
-                bg_color = "rgba(237, 137, 54, 0.15)"  # Orange transparent
-                border_color = "#ED8936"
-                status_icon = "⚠"
-                status_text = "VIGILANCE"
-                status_color = "#ED8936"
-            else:
-                bg_color = "rgba(245, 101, 101, 0.15)"  # Rouge transparent
-                border_color = "#F56565"
-                status_icon = "✗"
-                status_text = "DÉPASSEMENT"
-                status_color = "#F56565"
-            ecart_text = f"-{ecart:.0f} m²/hab à réduire"
+            bg_color = "rgba(245, 101, 101, 0.15)"
+            border_color = "#F56565"
+            status_icon = "✗"
+            status_text = "CRITIQUE"
+            status_color = "#F56565"
         
         st.markdown(f"""
 <div style="display: flex; align-items: center; padding: 0.85rem 1rem; background: {bg_color}; border-radius: 8px; margin-bottom: 0.5rem; border-left: 5px solid {border_color};">
-<div style="flex: 1.5;">
+<div style="flex: 1.3;">
 <div style="color: #FFFFFF; font-weight: 600; font-size: 0.95rem;">{typo_full}</div>
-<div style="color: #94A3B8; font-size: 0.75rem; margin-top: 0.25rem;">{artif:.0f} ha consommés</div>
+<div style="color: #94A3B8; font-size: 0.7rem; margin-top: 0.25rem;">{eff:.0f} m²/hab ajouté</div>
 </div>
-<div style="flex: 1; text-align: center;">
-<div style="color: #FFFFFF; font-size: 1.1rem; font-weight: 700;">{eff:.0f} <span style="font-size: 0.7rem; color: #94A3B8;">m²/hab</span></div>
-<div style="color: #64748B; font-size: 0.7rem;">actuel</div>
+<div style="flex: 0.9; text-align: center;">
+<div style="color: #94A3B8; font-size: 0.65rem; text-transform: uppercase;">Enveloppe</div>
+<div style="color: #FFFFFF; font-size: 0.95rem; font-weight: 600;">{enveloppe:.0f} ha</div>
 </div>
-<div style="flex: 1; text-align: center;">
-<div style="color: #48BB78; font-size: 1.1rem; font-weight: 700;">{OBJECTIF_ZAN_M2_HAB} <span style="font-size: 0.7rem; color: #94A3B8;">m²/hab</span></div>
-<div style="color: #64748B; font-size: 0.7rem;">objectif</div>
+<div style="flex: 0.9; text-align: center;">
+<div style="color: #94A3B8; font-size: 0.65rem; text-transform: uppercase;">Consommé</div>
+<div style="color: #FFFFFF; font-size: 0.95rem; font-weight: 600;">{conso_recent:.0f} ha</div>
 </div>
-<div style="flex: 1.2; text-align: right;">
+<div style="flex: 0.8; text-align: center;">
+<div style="color: #94A3B8; font-size: 0.65rem; text-transform: uppercase;">Taux</div>
+<div style="color: {status_color}; font-size: 1.1rem; font-weight: 700;">{taux:.0f}%</div>
+</div>
+<div style="flex: 0.9; text-align: center;">
+<div style="color: #94A3B8; font-size: 0.65rem; text-transform: uppercase;">Reste</div>
+<div style="color: #48BB78; font-size: 0.95rem; font-weight: 600;">{reste:.0f} ha</div>
+</div>
+<div style="flex: 1; text-align: right;">
 <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: {border_color}; color: #0F172A; padding: 0.35rem 0.65rem; border-radius: 5px; font-size: 0.75rem; font-weight: 700;">
 <span>{status_icon}</span><span>{status_text}</span>
 </div>
-<div style="color: {status_color}; font-size: 0.7rem; margin-top: 0.3rem; font-weight: 500;">{ecart_text}</div>
 </div>
 </div>
 """, unsafe_allow_html=True)
     
-    # Légende
-    st.markdown("""
-<div style="display: flex; gap: 1.5rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #334155; justify-content: center;">
-<div style="display: flex; align-items: center; gap: 0.4rem;"><div style="width: 12px; height: 12px; background: #48BB78; border-radius: 3px;"></div><span style="color: #94A3B8; font-size: 0.75rem;">Conforme (≤200 m²/hab)</span></div>
-<div style="display: flex; align-items: center; gap: 0.4rem;"><div style="width: 12px; height: 12px; background: #ED8936; border-radius: 3px;"></div><span style="color: #94A3B8; font-size: 0.75rem;">Vigilance (200-500 m²/hab)</span></div>
-<div style="display: flex; align-items: center; gap: 0.4rem;"><div style="width: 12px; height: 12px; background: #F56565; border-radius: 3px;"></div><span style="color: #94A3B8; font-size: 0.75rem;">Dépassement (>500 m²/hab)</span></div>
+    # Légende avec explication
+    st.markdown(f"""
+<div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid #334155;">
+<div style="color: #64748B; font-size: 0.7rem; margin-bottom: 0.5rem; font-style: italic;">
+Calcul : Enveloppe = Conso 2011-2021 × 50% | Seuil 3 ans (2024) = 30% de l'enveloppe consommée
+</div>
+<div style="display: flex; gap: 1.5rem; justify-content: center;">
+<div style="display: flex; align-items: center; gap: 0.4rem;"><div style="width: 12px; height: 12px; background: #48BB78; border-radius: 3px;"></div><span style="color: #94A3B8; font-size: 0.75rem;">Conforme (≤30%)</span></div>
+<div style="display: flex; align-items: center; gap: 0.4rem;"><div style="width: 12px; height: 12px; background: #ED8936; border-radius: 3px;"></div><span style="color: #94A3B8; font-size: 0.75rem;">Vigilance (30-50%)</span></div>
+<div style="display: flex; align-items: center; gap: 0.4rem;"><div style="width: 12px; height: 12px; background: #F56565; border-radius: 3px;"></div><span style="color: #94A3B8; font-size: 0.75rem;">Critique (>50%)</span></div>
+</div>
 </div>
 """, unsafe_allow_html=True)
     
