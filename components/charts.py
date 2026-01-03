@@ -1049,10 +1049,10 @@ def render_repartition_chart(metrics: dict):
     couleurs = []
     
     data_rep = [
-        ("Habitat", metrics.get("artif_habitat_ha", 0), "#28A745"),
-        ("Activites", metrics.get("artif_activites_ha", 0), "#FFC107"),
-        ("Mixte", metrics.get("artif_mixte_ha", 0), "#17A2B8"),
-        ("Routes", metrics.get("artif_routes_ha", 0), "#6C757D"),
+        ("Habitat", metrics.get("artif_habitat_ha", 0), "#48BB78"),
+        ("Activites", metrics.get("artif_activites_ha", 0), "#ED8936"),
+        ("Mixte", metrics.get("artif_mixte_ha", 0), "#2E86AB"),
+        ("Routes", metrics.get("artif_routes_ha", 0), "#64748B"),
         ("Autres", metrics.get("artif_autres_ha", 0), "#DC3545"),
     ]
     
@@ -1064,56 +1064,55 @@ def render_repartition_chart(metrics: dict):
     
     total = sum(valeurs)
     
-    col1, col2 = st.columns([1, 1])
+    fig = go.Figure(data=[go.Pie(
+        labels=categories,
+        values=valeurs,
+        hole=0.5,
+        marker=dict(colors=couleurs, line=dict(color="#1E293B", width=2)),
+        textinfo="percent",
+        textposition="inside",
+        textfont=dict(size=14, color="#FFFFFF", family="Segoe UI"),
+        hovertemplate="<b>%{label}</b><br>%{value:.1f} ha (%{percent})<extra></extra>",
+        pull=[0.02] * len(categories),
+    )])
     
-    with col1:
-        fig = go.Figure(data=[go.Pie(
-            labels=categories,
-            values=valeurs,
-            hole=0.5,
-            marker=dict(colors=couleurs),
-            textinfo="percent",
-            textposition="outside",
-            textfont=dict(size=13, color="#1A202C", family="Arial"),
-            hovertemplate="<b>%{label}</b><br>%{value:.1f} ha (%{percent})<extra></extra>",
-            pull=[0.02] * len(categories),
-        )])
-        
-        fig.update_layout(
-            title=dict(
-                text="Repartition par destination",
-                font=dict(size=16, color="#1E3A5F"),
-                x=0.5,
-            ),
-            showlegend=True,
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=-0.15,
-                xanchor="center",
-                x=0.5,
-                font=dict(size=11),
-            ),
-            height=400,
-            margin=dict(t=60, b=60, l=20, r=20),
-            annotations=[dict(
-                text=f"<b>{total:.0f}</b><br>ha total",
-                x=0.5, y=0.5,
-                font=dict(size=16, color="#1E3A5F"),
-                showarrow=False,
-            )],
-        )
-        
-        # Ajout de la mention de source
+    fig.update_layout(
+        title=dict(
+            text="Repartition par destination",
+            font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
+            x=0.5,
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.15,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=12, color="#CBD5E0"),
+            bgcolor="rgba(0,0,0,0)",
+        ),
+        height=450,
+        margin=dict(t=60, b=80, l=40, r=40),
+        paper_bgcolor="#1E293B",
+        annotations=[dict(
+            text=f"<b>{total:.0f}</b><br><span style='font-size:12px'>ha total</span>",
+            x=0.5, y=0.5,
+            font=dict(size=20, color="#FFFFFF"),
+            showarrow=False,
+        )],
+    )
+    
+    # Ajout de la mention de source
     fig.add_annotation(
         x=0.98, y=0.02,
         xref="paper", yref="paper",
         text=get_data_source_text(),
         showarrow=False,
-        font=dict(size=9, color="#718096"),
+        font=dict(size=9, color="#64748B"),
         align="right",
-        bgcolor="rgba(255,255,255,0.9)",
-        bordercolor="#E2E8F0",
+        bgcolor="rgba(15, 23, 42, 0.9)",
+        bordercolor="#334155",
         borderwidth=1,
         borderpad=4,
     )
@@ -1150,54 +1149,85 @@ def render_repartition_chart(metrics: dict):
 
 def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
     """
-    Affiche le top communes avec carte interactive - VERSION AMELIOREE
+    Affiche le top communes avec histogramme empilé horizontal par destination + carte
     """
     
-    df_top = df.nlargest(n_top, "artif_total_ha")[
-        ["idcom", "idcomtxt", "artif_total_ha", "pop21", "iddeptxt"]
-    ].copy()
+    # Colonnes de destination disponibles
+    dest_cols = ["art09hab24", "art09act24", "art09mix24", "art09rou24"]
+    dest_names = ["Habitat", "Activités", "Mixte", "Routes"]
+    dest_colors = ["#48BB78", "#ED8936", "#2E86AB", "#64748B"]
+    
+    # Sélectionner le top 10 et préparer les données par destination
+    cols_needed = ["idcom", "idcomtxt", "artif_total_ha", "pop21", "iddeptxt"] + dest_cols
+    cols_available = [c for c in cols_needed if c in df.columns]
+    
+    df_top = df.nlargest(n_top, "artif_total_ha")[cols_available].copy()
     df_top = df_top.reset_index(drop=True)
+    
+    # Convertir les colonnes destination en hectares si elles existent
+    for col in dest_cols:
+        if col in df_top.columns:
+            # Si valeurs > 1000, probablement en m², convertir en ha
+            if df_top[col].max() > 1000:
+                df_top[col] = df_top[col] / 10000
     
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        # Graphique barres horizontales - VERSION AVEC NOM SUR LES BARRES
+        # Trier par total décroissant pour l'affichage
         df_plot = df_top.sort_values("artif_total_ha", ascending=True)
         
         fig = go.Figure()
         
-        # Gradient de couleurs pour meilleure lisibilite
-        n = len(df_plot)
-        colors = [f"rgba(46, 134, 171, {0.6 + 0.4 * i / n})" for i in range(n)]
+        # Vérifier si on a les colonnes de destination
+        has_dest_data = all(col in df_plot.columns for col in dest_cols)
         
-        # Texte sur la barre : nom de la commune + valeur
-        texts = [f"<b>{nom}</b>  ({val:.1f} ha)" for nom, val in zip(df_plot["idcomtxt"], df_plot["artif_total_ha"])]
-        
-        fig.add_trace(
-            go.Bar(
-                y=list(range(len(df_plot))),
-                x=df_plot["artif_total_ha"],
-                orientation="h",
-                marker=dict(
-                    color=colors,
-                    line=dict(color="#1E293B", width=1),
-                ),
-                text=texts,
-                textposition="inside",
-                insidetextanchor="start",
-                textfont=dict(size=12, color="#FFFFFF", family="Segoe UI"),
-                hovertemplate=(
-                    "<b>%{text}</b><br>"
-                    "Artificialisation: %{x:.2f} ha<br>"
-                    "<extra></extra>"
-                ),
+        if has_dest_data:
+            # Histogramme empilé horizontal par destination
+            for dest_name, dest_col, dest_color in zip(dest_names, dest_cols, dest_colors):
+                fig.add_trace(
+                    go.Bar(
+                        y=df_plot["idcomtxt"],
+                        x=df_plot[dest_col],
+                        name=dest_name,
+                        orientation="h",
+                        marker=dict(
+                            color=dest_color,
+                            line=dict(color="#1E293B", width=1),
+                        ),
+                        hovertemplate=(
+                            "<b>%{y}</b><br>"
+                            f"{dest_name}: " + "%{x:.2f} ha<br>"
+                            "<extra></extra>"
+                        ),
+                    )
+                )
+        else:
+            # Fallback: barre simple si pas de données par destination
+            fig.add_trace(
+                go.Bar(
+                    y=df_plot["idcomtxt"],
+                    x=df_plot["artif_total_ha"],
+                    orientation="h",
+                    marker=dict(
+                        color="#2E86AB",
+                        line=dict(color="#1E293B", width=1),
+                    ),
+                    text=df_plot["artif_total_ha"].apply(lambda x: f"{x:.1f} ha"),
+                    textposition="outside",
+                    textfont=dict(size=11, color="#FFFFFF"),
+                    hovertemplate=(
+                        "<b>%{y}</b><br>"
+                        "Total: %{x:.2f} ha<br>"
+                        "<extra></extra>"
+                    ),
+                )
             )
-        )
         
         fig.update_layout(
             title=dict(
-                text=f"TOP {n_top} COMMUNES LES PLUS ARTIFICIALISÉES",
-                font=dict(size=16, color="#FFFFFF", family="Segoe UI"),
+                text=f"TOP {n_top} COMMUNES - ARTIFICIALISATION PAR DESTINATION",
+                font=dict(size=14, color="#FFFFFF", family="Segoe UI"),
                 x=0.5,
             ),
             xaxis=dict(
@@ -1209,35 +1239,41 @@ def render_top_communes_chart(df: pd.DataFrame, n_top: int = 10):
             ),
             yaxis=dict(
                 title="",
-                showticklabels=False,
+                tickfont=dict(size=11, color="#FFFFFF"),
                 showgrid=False,
             ),
+            barmode="stack",
             template="plotly_dark",
             height=500,
-            showlegend=False,
-            margin=dict(t=80, b=60, l=20, r=40),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=-0.18,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=11, color="#CBD5E0"),
+                bgcolor="rgba(0,0,0,0)",
+            ),
+            margin=dict(t=80, b=80, l=120, r=40),
             plot_bgcolor="#0F172A",
             paper_bgcolor="#1E293B",
         )
         
         # Ajout de la mention de source
-    fig.add_annotation(
-        x=0.98, y=0.02,
-        xref="paper", yref="paper",
-        text=get_data_source_text(),
-        showarrow=False,
-        font=dict(size=9, color="#718096"),
-        align="right",
-        bgcolor="rgba(255,255,255,0.9)",
-        bordercolor="#E2E8F0",
-        borderwidth=1,
-        borderpad=4,
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Mention de source
-    st.markdown(f'<div style="text-align: center; margin-top: -10px; font-size: 0.75rem; color: #718096;">{get_data_source_html()}</div>', unsafe_allow_html=True)
+        fig.add_annotation(
+            x=0.98, y=0.02,
+            xref="paper", yref="paper",
+            text=get_data_source_text(),
+            showarrow=False,
+            font=dict(size=9, color="#64748B"),
+            align="right",
+            bgcolor="rgba(15, 23, 42, 0.9)",
+            bordercolor="#334155",
+            borderwidth=1,
+            borderpad=4,
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
     
     with col2:
         # Carte interactive
