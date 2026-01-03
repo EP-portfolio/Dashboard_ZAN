@@ -75,3 +75,4 @@ def get_footer_text() -> str:
         f"Plus d'infos: {DATA_SOURCE_URL}"
     )
 
+

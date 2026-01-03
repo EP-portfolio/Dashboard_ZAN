@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Composant Filtres du Dashboard - Version corrigée
+Composant Filtres du Dashboard - Version Business Professional
 """
 
 import streamlit as st
@@ -9,15 +9,23 @@ import pandas as pd
 
 def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
     """
-    Affiche les filtres dans la sidebar
+    Affiche les filtres dans la sidebar avec un design professionnel
     """
     
     filters = {}
     
+    # Header sidebar
+    st.markdown('''
+<div style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-bottom: 2px solid #2E86AB; border-radius: 8px 8px 0 0; padding: 1.25rem 1rem; margin-bottom: 1.5rem;">
+<div style="color: #FFFFFF; font-size: 1.1rem; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 0.25rem;">DASHBOARD ZAN</div>
+<div style="color: #94A3B8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Pilotage Artificialisation</div>
+</div>
+''', unsafe_allow_html=True)
+    
     # Périmètre
     st.markdown('''
-<div style="background: linear-gradient(135deg, #1E3A5F 0%, #2E5A8F 100%); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1rem;">
-<span style="color: white; font-weight: 600; font-size: 0.9rem;">🗺️ Perimetre d etude</span>
+<div style="background: #1E293B; border-left: 3px solid #2E86AB; border-radius: 0 6px 6px 0; padding: 0.75rem 1rem; margin-bottom: 1rem;">
+<span style="color: #FFFFFF; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.3px;">PÉRIMÈTRE D'ÉTUDE</span>
 </div>
 ''', unsafe_allow_html=True)
     
@@ -35,8 +43,8 @@ def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
     
     # Département
     st.markdown('''
-<div style="background: #1E2229; border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; border-left: 3px solid #2E86AB;">
-<span style="color: #FAFAFA; font-weight: 600; font-size: 0.85rem;">🏛️ Departement</span>
+<div style="background: #1E293B; border-left: 3px solid #2E86AB; border-radius: 0 6px 6px 0; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem;">
+<span style="color: #FFFFFF; font-weight: 600; font-size: 0.8rem; letter-spacing: 0.3px;">DÉPARTEMENT</span>
 </div>
 ''', unsafe_allow_html=True)
     
@@ -45,7 +53,7 @@ def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
         "Departements",
         options=departements,
         default=[],
-        placeholder="Tous les departements",
+        placeholder="Tous les départements",
         label_visibility="collapsed",
     )
     
@@ -53,8 +61,8 @@ def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
     
     # Communes
     st.markdown('''
-<div style="background: #1E2229; border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; border-left: 3px solid #A23B72;">
-<span style="color: #FAFAFA; font-weight: 600; font-size: 0.85rem;">🏘️ Communes</span>
+<div style="background: #1E293B; border-left: 3px solid #A23B72; border-radius: 0 6px 6px 0; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem;">
+<span style="color: #FFFFFF; font-weight: 600; font-size: 0.8rem; letter-spacing: 0.3px;">COMMUNES</span>
 </div>
 ''', unsafe_allow_html=True)
     
@@ -77,13 +85,13 @@ def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
     
     # Typologie AAV
     st.markdown('''
-<div style="background: #1E2229; border-radius: 8px; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem; border-left: 3px solid #48BB78;">
-<span style="color: #FAFAFA; font-weight: 600; font-size: 0.85rem;">🌆 Typologie Urbaine</span>
+<div style="background: #1E293B; border-left: 3px solid #48BB78; border-radius: 0 6px 6px 0; padding: 0.6rem 0.9rem; margin-bottom: 0.5rem;">
+<span style="color: #FFFFFF; font-weight: 600; font-size: 0.8rem; letter-spacing: 0.3px;">TYPOLOGIE URBAINE</span>
 </div>
 ''', unsafe_allow_html=True)
     
     typo_labels = {
-        "11": "Pole principal",
+        "11": "Pôle principal",
         "12": "Couronne grande aire",
         "20": "Petite/moyenne aire",
         "30": "Hors attraction",
@@ -114,30 +122,30 @@ def render_filters(df_scot: pd.DataFrame, df_cc: pd.DataFrame) -> dict:
     artif = df_filtered['artif_total_ha'].sum()
     
     html = f'''
-<div style="background: linear-gradient(135deg, #EBF4FF 0%, #E6FFFA 100%); border: 1px solid #90CDF4; border-radius: 10px; padding: 1rem; margin-top: 0.5rem;">
-<div style="color: #1E3A5F; font-weight: 700; font-size: 0.85rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">ℹ️ Selection actuelle</div>
-<table style="width: 100%; border-collapse: separate; border-spacing: 0 0.4rem;">
+<div style="background: #1E293B; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; margin-top: 1rem;">
+<div style="color: #FFFFFF; font-weight: 700; font-size: 0.85rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #334155; padding-bottom: 0.75rem;">SÉLECTION ACTUELLE</div>
+<table style="width: 100%; border-collapse: separate; border-spacing: 0 0.5rem;">
 <tr>
-<td style="background: white; border-radius: 6px; padding: 0.5rem 0.75rem;">
+<td style="background: #0F172A; border: 1px solid #334155; border-radius: 6px; padding: 0.75rem 1rem;">
 <table style="width: 100%;"><tr>
-<td style="color: #718096; font-size: 0.8rem;">Communes</td>
-<td style="color: #FAFAFA; font-weight: 700; font-size: 1rem; text-align: right;">{nb_communes}</td>
+<td style="color: #94A3B8; font-size: 0.8rem; font-weight: 500;">Communes</td>
+<td style="color: #FFFFFF; font-weight: 700; font-size: 1rem; text-align: right; font-family: 'Segoe UI', Arial, sans-serif;">{nb_communes}</td>
 </tr></table>
 </td>
 </tr>
 <tr>
-<td style="background: white; border-radius: 6px; padding: 0.5rem 0.75rem;">
+<td style="background: #0F172A; border: 1px solid #334155; border-radius: 6px; padding: 0.75rem 1rem;">
 <table style="width: 100%;"><tr>
-<td style="color: #718096; font-size: 0.8rem;">Habitants</td>
-<td style="color: #1A202C; font-weight: 700; font-size: 1rem; text-align: right;">{pop:,}</td>
+<td style="color: #94A3B8; font-size: 0.8rem; font-weight: 500;">Habitants</td>
+<td style="color: #FFFFFF; font-weight: 700; font-size: 1rem; text-align: right; font-family: 'Segoe UI', Arial, sans-serif;">{pop:,}</td>
 </tr></table>
 </td>
 </tr>
 <tr>
-<td style="background: white; border-radius: 6px; padding: 0.5rem 0.75rem;">
+<td style="background: #0F172A; border: 1px solid #334155; border-radius: 6px; padding: 0.75rem 1rem;">
 <table style="width: 100%;"><tr>
-<td style="color: #718096; font-size: 0.8rem;">Artificialise</td>
-<td style="color: #1A202C; font-weight: 700; font-size: 1rem; text-align: right;">{artif:,.1f} ha</td>
+<td style="color: #94A3B8; font-size: 0.8rem; font-weight: 500;">Artificialisé</td>
+<td style="color: #FFFFFF; font-weight: 700; font-size: 1rem; text-align: right; font-family: 'Segoe UI', Arial, sans-serif;">{artif:,.1f} ha</td>
 </tr></table>
 </td>
 </tr>

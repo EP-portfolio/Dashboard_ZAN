@@ -64,3 +64,4 @@ Le Dashboard sera accessible sur : **http://localhost:8501** (ou port suivant si
 - Si l'API geo.api.gouv.fr ne repond pas, un tableau de fallback s'affiche
 - Tous les graphiques utilisent maintenant une syntaxe Plotly compatible
 
+
